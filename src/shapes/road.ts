@@ -3,7 +3,7 @@ import { Coordinates } from "./base";
 import FastMap from "../fast-map";
 
 export type RoadMode = "one-way" | "two-way";
-export type RoadSpeed = "1" | "2" | "3";
+export type RoadSpeed = number;
 export type RoadGait = "flat" | "slope" | "stairs";
 
 /**
@@ -71,13 +71,13 @@ export class Road {
   }
 
   get beginCoordinates() {
-    return typeof this.begin === "string"
+    return typeof this.begin !== "object"
       ? this.fastMap?.getWayPoint(this.begin)?.center
       : this.begin;
   }
 
   get endCoordinates() {
-    return typeof this.end === "string"
+    return typeof this.end !== "object"
       ? this.fastMap?.getWayPoint(this.end)?.center
       : this.end;
   }

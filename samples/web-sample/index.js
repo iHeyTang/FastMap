@@ -1,4 +1,4 @@
-const HTTP_SEVER_HOST = "http://localhost:3000";
+const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
 const WS_SERVER_HOST = "ws://localhost:3001";
 
 const search = window.location.search;
@@ -28,9 +28,9 @@ async function init() {
         draw: {
           // 如有相同的参数定义，gait > speed > mode
           Road: ({ mode, speed, gait }) => {
-            const strokeWidth = mode === "one-way" ? 3 : 2;
+            const strokeWidth = mode === "one-way" ? 3 : 10;
             const stroke =
-              speed === 1 ? "green" : speed === 2 ? "orange" : "red";
+              speed === 1 ? "green" : speed === 3 ? "red" : "orange";
             const strokeDashArray =
               gait === "slope" ? [1, 1] : gait === "stairs" ? [5, 5] : [];
             return { stroke, strokeWidth, strokeDashArray };
@@ -47,7 +47,7 @@ async function init() {
                 ? "blue"
                 : undefined;
 
-            return { fill, strokeWidth: 2 };
+            return { radius: 5, fill, strokeWidth: 2 };
           },
           Robot: () => ({
             height: 10,
@@ -58,51 +58,46 @@ async function init() {
     }
   );
 
-  // 添加路径
-  for (const line of lines) {
-    fastMap.addRoads([
-      new FastMap.Road({
-        // 这里的key是唯一标识，不可重复
-        key: line.id,
-        // 这里的begin和end是路径的起点和终点，是一个FastMap.Coordinates实例或者FastMap.WayPoint的id
-        begin: line.point[0],
-        end: line.point[1],
-        // 这里的mode是路径的类型，是一个字符串，可选值有"one-way"和"two-way"，表示单向和双向
-        mode: line.direction === 1 ? "two-way" : "one-way",
-        // 这里的speed是路径的速度，是一个数字，可选值有1、2、3，表示慢、中、快
-        speed: line.speed === 1 ? 1 : line.speed === 2 ? 3 : 2,
-        // 这里的gait是路径的坡度，是一个字符串，可选值有"stairs"、"slope"、"flat"，表示楼梯、坡道、平地
-        gait: line.gait === 1 ? "stairs" : line.gait === 2 ? "slope" : "flat",
-        // 这里的radar是路径的雷达颜色，是一个字符串，可选值有"red"、"yellow"、"white"，表示红、黄、白
-        radar:
-          line.radar === "红"
-            ? "red"
-            : line.radar === "黄"
-            ? "yellow"
-            : "white",
-      }),
-    ]);
-  }
-
   // 添加点位
   for (const point of points) {
-    fastMap.addWaypoints([
-      new FastMap.WayPoint({
-        // 这里的key是唯一标识，不可重复
-        key: point.id,
-        // 这里的center是点位的中心点，是一个FastMap.Coordinates实例
-        center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0),
-        // 这里的type是点位的类型，是一个字符串，可选值有"charge"、"task"、"return"，表示充电点、任务点、掉头点
-        type:
-          point.type === 3
-            ? "charge"
-            : point.type === 2
-            ? "chargePrepare"
-            : point.type === 1
-            ? "task"
-            : "return",
-      }),
-    ]);
+    const waypoint = new FastMap.WayPoint({
+      fastMap,
+      // 这里的key是唯一标识，不可重复
+      key: point.id,
+      // 这里的center是点位的中心点，是一个FastMap.Coordinates实例
+      center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0, 0.01),
+      // 这里的type是点位的类型，是一个字符串，可选值有"charge"、"task"、"return"，表示充电点、任务点、掉头点
+      type:
+        point.type === 3
+          ? "charge"
+          : point.type === 2
+          ? "chargePrepare"
+          : point.type === 1
+          ? "task"
+          : "return",
+    });
+    fastMap.addWaypoints([waypoint]);
+  }
+
+  // 添加路径
+  for (const line of lines) {
+    const road = new FastMap.Road({
+      fastMap,
+      // 这里的key是唯一标识，不可重复
+      key: line.id,
+      // 这里的begin和end是路径的起点和终点，是一个FastMap.Coordinates实例或者FastMap.WayPoint的id
+      begin: line.point[0],
+      end: line.point[1],
+      // 这里的mode是路径的类型，是一个字符串，可选值有"one-way"和"two-way"，表示单向和双向
+      mode: line.direction === 1 ? "two-way" : "one-way",
+      speed: line.speed,
+      // 这里的gait是路径的坡度，是一个字符串，可选值有"stairs"、"slope"、"flat"，表示楼梯、坡道、平地
+      gait: line.gait === 1 ? "stairs" : line.gait === 2 ? "slope" : "flat",
+      // 这里的radar是路径的雷达颜色，是一个字符串，可选值有"red"、"yellow"、"white"，表示红、黄、白
+      radar:
+        line.radar === "红" ? "red" : line.radar === "黄" ? "yellow" : "white",
+    });
+    fastMap.addRoads([road]);
   }
 
   // 地图初始化
@@ -110,70 +105,67 @@ async function init() {
 
   return fastMap;
 }
-
 init().then((fastMap) => {
-  const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
-  // 监听机器人状态信息
-  robotStatusSocket.onData((e) => {
-    const data = JSON.parse(e.data);
-    const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
-    if (!robot) {
-      fastMap.addRobot(
-        new FastMap.Robot({
-          key: data.peri_id,
-          center: new FastMap.Coordinates(
-            data.status.pos[0],
-            data.status.pos[1],
-            data.status.pos[2]
-          ),
-        })
-      );
-    } else {
-      fastMap.moveRobotTo(
-        data.peri_id,
-        new FastMap.Coordinates(
-          data.status.pos[0],
-          data.status.pos[1],
-          data.status.pos[2]
-        )
-      );
-    }
-  });
-  // 定时更新路径规划
-  setInterval(async () => {
-    const robotKeys = fastMap.shapes.robots.map((r) => r.key);
-    const highlightPointList = [];
-    const highlightLineList = [];
-    for (const robotKey of robotKeys) {
-      const plan = await mapDataFetcher.getNavigationPlan(robotKey);
-      if (plan) {
-        highlightPointList.push(plan.point);
-        highlightLineList.push(...plan.path);
-      }
-    }
-
-    // 除了取得的路径和点位外，还需要把路径经过的点位也高亮一下
-    const points = fastMap.shapes.roads.filter((r) =>
-      highlightLineList.includes(r.key)
-    );
-    for (const point of points) {
-      highlightPointList.push(point.begin, point.end);
-    }
-
-    const highlights = new FastMap.Highlights({
-      fastMap,
-      robotKeys: [],
-      roadKeys: highlightLineList,
-      waypointKeys: highlightPointList,
-      // 机器人的高亮样式，变大+红色
-      robotRectOptions: { height: 14, width: 14, fill: "red" },
-      // 路径的高亮样式，加粗线
-      roadOptions: { strokeWidth: 10 },
-      // 点位的高亮样式，半径加大
-      waypointOptions: { radius: 10 },
-    });
-    fastMap.highlight(highlights);
-  }, 3000);
+  // const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
+  // // 监听机器人状态信息
+  // robotStatusSocket.onData((e) => {
+  //   const data = JSON.parse(e.data);
+  //   const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
+  //   if (!robot) {
+  //     fastMap.addRobot(
+  //       new FastMap.Robot({
+  //         key: data.peri_id,
+  //         center: new FastMap.Coordinates(
+  //           data.status.pos[0],
+  //           data.status.pos[1],
+  //           data.status.pos[2] || 0
+  //         ),
+  //       })
+  //     );
+  //   } else {
+  //     fastMap.moveRobotTo(
+  //       data.peri_id,
+  //       new FastMap.Coordinates(
+  //         data.status.pos[0],
+  //         data.status.pos[1],
+  //         data.status.pos[2]
+  //       )
+  //     );
+  //   }
+  // });
+  // // 定时更新路径规划
+  // setInterval(async () => {
+  //   const robotKeys = fastMap.shapes.robots.map((r) => r.key);
+  //   const highlightPointList = [];
+  //   const highlightLineList = [];
+  //   for (const robotKey of robotKeys) {
+  //     const plan = await mapDataFetcher.getNavigationPlan(robotKey);
+  //     if (plan) {
+  //       highlightPointList.push(plan.point);
+  //       highlightLineList.push(...plan.path);
+  //     }
+  //   }
+  //   // 除了取得的路径和点位外，还需要把路径经过的点位也高亮一下
+  //   const points = fastMap.shapes.roads.filter((r) =>
+  //     highlightLineList.includes(r.key)
+  //   );
+  //   for (const point of points) {
+  //     highlightPointList.push(point.begin, point.end);
+  //   }
+  //   const highlights = new FastMap.Highlights({
+  //     fastMap,
+  //     robotKeys: [],
+  //     roadKeys: highlightLineList,
+  //     waypointKeys: highlightPointList,
+  //     // 机器人的高亮样式，变大+红色
+  //     robotRectOptions: { height: 14, width: 14, fill: "red" },
+  //     // 路径的高亮样式，加粗线
+  //     roadOptions: { strokeWidth: 10 },
+  //     // 点位的高亮样式，半径加大
+  //     waypointOptions: { radius: 10 },
+  //   });
+  //   fastMap.highlight(highlights);
+  // }, 3000);
 });
 
 function resizeCanvas() {
@@ -195,7 +187,7 @@ function genMapDataFetcher(tid) {
     // 从服务器获取数据
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/map/point?tid=${tid}`);
     const data = await res.json();
-    if (data.csq !== 1) return [];
+    // if (data.csq !== 1) return [];
     return data.point;
   }
 
@@ -206,7 +198,7 @@ function genMapDataFetcher(tid) {
   async function getMapLines() {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/map/line?tid=${tid}`);
     const data = await res.json();
-    if (data.csq !== 1) return [];
+    // if (data.csq !== 1) return [];
     return data.line;
   }
 
@@ -221,7 +213,7 @@ function genMapDataFetcher(tid) {
       body: { tid, peri_id: peri_id },
     });
     const data = await res.json();
-    if (data.csq !== 1) return {};
+    // if (data.csq !== 1) return {};
     return { peri_id: data.peri_id, point: data.point, path: data.path };
   }
 
