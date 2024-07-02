@@ -1,4 +1,4 @@
-const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
+const HTTP_SEVER_HOST = "http://localhost:3000";
 const WS_SERVER_HOST = "ws://localhost:3001";
 
 const search = window.location.search;
