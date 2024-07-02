@@ -1,5 +1,5 @@
 // 引入Hapi模块
-const mock = require("./mock");
+const mock = require("./data");
 const Hapi = require("@hapi/hapi");
 
 // 创建一个异步函数来启动服务器
