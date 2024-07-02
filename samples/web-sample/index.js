@@ -28,26 +28,31 @@ async function init() {
         draw: {
           // 如有相同的参数定义，gait > speed > mode
           Road: ({ mode, speed, gait }) => {
-            const strokeWidth = mode === "one-way" ? 3 : 10;
+            const strokeWidth = mode === "one-way" ? 1 : 2;
             const stroke =
-              speed === 1 ? "green" : speed === 3 ? "red" : "orange";
+              speed === 1 ? "#40c057" : speed === 3 ? "#fa5252" : "#fd7e14";
             const strokeDashArray =
               gait === "slope" ? [1, 1] : gait === "stairs" ? [5, 5] : [];
-            return { stroke, strokeWidth, strokeDashArray };
+            return { stroke: "#1c7ed6", strokeWidth, strokeDashArray };
           },
           WayPoint: ({ type }) => {
-            const fill =
+            const stroke =
               type === "charge"
-                ? "green"
+                ? "#40c057"
                 : type === "chargePrepare"
-                ? "lightGreen"
+                ? "#8ce99a"
                 : type === "return"
-                ? "purple"
+                ? "#7048e8"
                 : type === "task"
-                ? "blue"
+                ? "#1c7ed6"
                 : undefined;
 
-            return { radius: 5, fill, strokeWidth: 2 };
+            return {
+              radius: 2,
+              stroke: "black",
+              fill: "black",
+              strokeWidth: type === "return" ? 1 : 5,
+            };
           },
           Robot: () => ({
             height: 10,
@@ -106,33 +111,33 @@ async function init() {
   return fastMap;
 }
 init().then((fastMap) => {
-  // const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
-  // // 监听机器人状态信息
-  // robotStatusSocket.onData((e) => {
-  //   const data = JSON.parse(e.data);
-  //   const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
-  //   if (!robot) {
-  //     fastMap.addRobot(
-  //       new FastMap.Robot({
-  //         key: data.peri_id,
-  //         center: new FastMap.Coordinates(
-  //           data.status.pos[0],
-  //           data.status.pos[1],
-  //           data.status.pos[2] || 0
-  //         ),
-  //       })
-  //     );
-  //   } else {
-  //     fastMap.moveRobotTo(
-  //       data.peri_id,
-  //       new FastMap.Coordinates(
-  //         data.status.pos[0],
-  //         data.status.pos[1],
-  //         data.status.pos[2]
-  //       )
-  //     );
-  //   }
-  // });
+  const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
+  // 监听机器人状态信息
+  robotStatusSocket.onData((e) => {
+    const data = JSON.parse(e.data);
+    const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
+    if (!robot) {
+      fastMap.addRobot(
+        new FastMap.Robot({
+          key: data.peri_id,
+          center: new FastMap.Coordinates(
+            data.status.pos[0],
+            data.status.pos[1],
+            data.status.pos[2] || 0
+          ),
+        })
+      );
+    } else {
+      fastMap.moveRobotTo(
+        data.peri_id,
+        new FastMap.Coordinates(
+          data.status.pos[0],
+          data.status.pos[1],
+          data.status.pos[2]
+        )
+      );
+    }
+  });
   // // 定时更新路径规划
   // setInterval(async () => {
   //   const robotKeys = fastMap.shapes.robots.map((r) => r.key);
@@ -221,9 +226,7 @@ function genMapDataFetcher(tid) {
    * @returns {{ws: WebSocket, onData: ((this: WebSocket, ev: MessageEvent<any>) => any) | null }} 返回一个WebSocket对象，用于获取机器人状态
    */
   function createRobotStatusSocket() {
-    const robotStatusSocket = new WebSocket(
-      `${WS_SERVER_HOST}/patro/map/point?tid=${tid}`
-    );
+    const robotStatusSocket = new WebSocket(`${WS_SERVER_HOST}`);
     robotStatusSocket.onopen = () => {
       console.log("ws opened");
     };
