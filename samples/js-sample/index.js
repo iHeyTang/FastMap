@@ -1,5 +1,7 @@
 // 取得转换后的数据，这个数据的结构和api数据结构一致
 const { lines, points } = fetchData();
+console.log("🚀 ~ points:", points);
+console.log("🚀 ~ lines:", lines);
 
 // --------------------------------------------------
 // 以下为正式的demo代码
@@ -76,7 +78,7 @@ for (const point of points) {
       // 这里的key是唯一标识，不可重复
       key: point.id,
       // 这里的center是点位的中心点，是一个FastMap.Coordinates实例
-      center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0, 50),
+      center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0),
       // 这里的type是点位的类型，是一个字符串，可选值有"charge"、"task"、"return"，表示充电点、任务点、掉头点
       type:
         point.type === 3
@@ -226,19 +228,19 @@ function fetchData() {
       id: `circle-${item["中心 X"]}-${item["中心 Y"]}-${item["中心 Z"]}`,
       name: `circle-${item["中心 X"]}-${item["中心 Y"]}-${item["中心 Z"]}`,
       pos: [
-        Number(item["中心 X"]),
-        Number(item["中心 Y"]),
-        Number(item["中心 Z"]),
+        Number(item["中心 X"]) * 50,
+        Number(item["中心 Y"]) * 50,
+        Number(item["中心 Z"]) * 50,
       ],
       // 文档里只给到了掉头点、充电点、任务点。但是给到的api文档中是过渡点、任务点、充电准备点、充电点
       type: item.颜色 === "绿" ? 3 : item.厚度 === "1.0000" ? 0 : 1,
     }));
 
   const getPointId = (lineItem) => {
-    const x1 = Number(lineItem["起点 X"]);
-    const y1 = Number(lineItem["起点 Y"]);
-    const x2 = Number(lineItem["端点 X"]);
-    const y2 = Number(lineItem["端点 Y"]);
+    const x1 = Number(lineItem["起点 X"]) * 50;
+    const y1 = Number(lineItem["起点 Y"]) * 50;
+    const x2 = Number(lineItem["端点 X"]) * 50;
+    const y2 = Number(lineItem["端点 Y"]) * 50;
     const point1 = points.find(
       (item) => item.pos[0] === x1 && item.pos[1] === y1
     );

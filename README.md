@@ -40,12 +40,12 @@ const fastMap = new FastMap("canvas", { backgroundColor: "#f0f0f0" });
 // 创建2个点位，并加入到地图实例中
 const waypoint1 = new FastMap.WayPoint({
   key: "p-1",
-  center: new FastMap.Coordinates(0, 0, 0, 50),
+  center: new FastMap.Coordinates(0, 0, 0),
   type: "charge",
 });
 const waypoint2 = new FastMap.WayPoint({
   key: "p-2",
-  center: new FastMap.Coordinates(1, 1, 0, 50),
+  center: new FastMap.Coordinates(1, 1, 0),
   type: "task",
 });
 fastMap.addWaypoints([waypoint1, waypoint2]);
