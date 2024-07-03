@@ -1,4 +1,4 @@
-const HTTP_SEVER_HOST = "http://localhost:3000";
+const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
 const WS_SERVER_HOST = "ws://localhost:3001";
 
 const search = window.location.search;
@@ -6,12 +6,161 @@ const tid = search.slice(0).split("=")[1];
 
 const mapDataFetcher = genMapDataFetcher(tid);
 
+const SCALE = 0.006;
+
 // --------------------------------------------------
 // 以下为正式的demo代码
 // --------------------------------------------------
 
+/**
+ * 机器人分配任务的窗口，由画布点击事件触发
+ */
+const taskAssignModal = (e) => {
+  const { cx, cy, fastMap } = e;
+  const x = Number((cx / SCALE).toFixed(4));
+  const y = Number((cy / SCALE).toFixed(4));
+
+  // 渲染一个蒙版
+  const mask = document.createElement("div");
+  mask.id = "mask";
+  mask.style.position = "absolute";
+  mask.style.left = "0";
+  mask.style.top = "0";
+  mask.style.width = "100%";
+  mask.style.height = "100%";
+  mask.style.backgroundColor = "rgba(0,0,0,0.5)";
+  mask.style.zIndex = 998;
+  document.body.appendChild(mask);
+  // 点击蒙版关闭窗口
+  mask.onclick = () => {
+    mask.remove();
+  };
+
+  //渲染一个div
+  // if (document.getElementById("task-assign-modal")) return;
+  const body = document.createElement("div");
+  body.id = "modal";
+  body.style.position = "absolute";
+  body.style.left = "calc(50% - 200px)";
+  body.style.top = "30%";
+  body.style.width = "400px";
+  body.style.height = "300px";
+  body.style.backgroundColor = "white";
+  body.style.zIndex = 999;
+  body.style.padding = "20px";
+  body.style.textAlign = "center";
+  mask.appendChild(body);
+
+  const title = document.createElement("div");
+  title.append(document.createTextNode("派遣机器人"));
+  title.style.textAlign = "center";
+  title.style.fontSize = "20px";
+
+  body.appendChild(title);
+  body.appendChild(
+    document.createTextNode(
+      `坐标 (${x}, ${y})，请选择机器人派遣任务，或中止已有任务`
+    )
+  );
+  body.onclick = (e) => {
+    // body 点击事件阻止冒泡
+    e.stopPropagation();
+  };
+
+  // 在body中渲染多个机器人
+  for (const r of fastMap.shapes.robots) {
+    const robot = document.createElement("div");
+
+    robot.style.display = "flex";
+
+    const robotDoTask = document.createElement("div");
+    robotDoTask.style.color = "white";
+    robotDoTask.style.backgroundColor = "gray";
+    robotDoTask.style.cursor = "pointer";
+    robotDoTask.style.textAlign = "center";
+    robotDoTask.style.alignContent = "center";
+    robotDoTask.style.height = "60px";
+    robotDoTask.style.margin = "4px 4px";
+    robotDoTask.style.padding = "4px 4px";
+    robotDoTask.style.width = "100%";
+
+    const robotTitle = document.createElement("div");
+    robotTitle.appendChild(document.createTextNode(r.key));
+    robotDoTask.appendChild(robotTitle);
+    const robotPos = document.createElement("div");
+    robotPos.appendChild(
+      document.createTextNode(
+        `(${(r.center.x / SCALE).toFixed(4)}, ${(r.center.y / SCALE).toFixed(
+          4
+        )})`
+      )
+    );
+    robotDoTask.appendChild(robotPos);
+
+    robotDoTask.onclick = () => {
+      const res = mapDataFetcher.navigationPlan(r.key);
+      if (res.csq === 1) {
+        // 关闭窗口
+        mask.remove();
+        setTimeout(() => {
+          // 轻提示
+          alert(`任务派遣成功，机器人${r.key}已经开始前往(${x}, ${y})点位`);
+          const highlights = new FastMap.Highlights({
+            fastMap,
+            robotKeys: [],
+            roadKeys: res.path,
+            waypointKeys: res.point,
+            // 机器人的高亮样式，变大+红色
+            robotRectOptions: { height: 14, width: 14, fill: "red" },
+            // 路径的高亮样式，加粗线
+            roadOptions: { strokeWidth: 10 },
+            // 点位的高亮样式，半径加大
+            waypointOptions: { radius: 10 },
+          });
+          fastMap.highlight(highlights);
+        }, 0);
+      } else {
+        alert("任务派遣失败");
+      }
+    };
+
+    const ending = document.createElement("div");
+    ending.style.color = "white";
+    ending.style.backgroundColor = "#f03e3e";
+    ending.style.cursor = "pointer";
+    ending.style.textAlign = "center";
+    ending.style.alignContent = "center";
+    ending.style.height = "60px";
+    ending.style.margin = "4px 4px";
+    ending.style.padding = "4px 4px";
+    ending.style.width = "60px";
+    ending.appendChild(document.createTextNode("中止"));
+
+    ending.onclick = () => {
+      const res = mapDataFetcher.navigationStop(r.key);
+      if (res.csq === 1) {
+        // 关闭窗口
+        mask.remove();
+        setTimeout(() => {
+          // 轻提示
+          alert("任务取消成功");
+          fastMap.clearHighlight();
+        }, 0);
+      } else {
+        alert("任务取消失败");
+      }
+    };
+
+    robot.appendChild(robotDoTask);
+    robot.appendChild(ending);
+
+    body.appendChild(robot);
+  }
+};
+
 async function init() {
-  const [lines, points] = await Promise.all([
+  const [fences, lines, points] = await Promise.all([
+    mapDataFetcher.getMapFences(),
     mapDataFetcher.getMapLines(),
     mapDataFetcher.getMapPoints(),
   ]);
@@ -26,6 +175,12 @@ async function init() {
       // 这里是FastMap扩展的配置项，可以配置不同的图形的样式
       fastMapConfig: {
         draw: {
+          Fence: ({ type }) => {
+            return {
+              zIndex: -100,
+              fill: type === "boundary" ? "#a5d8ff" : "#f0f0f0",
+            };
+          },
           // 如有相同的参数定义，gait > speed > mode
           Road: ({ mode, speed, gait }) => {
             const strokeWidth = mode === "one-way" ? 1 : 2;
@@ -60,8 +215,28 @@ async function init() {
           }),
         },
       },
+      onFastMapDoubleClick: (e) => {
+        const { cx, cy, fastMap } = e;
+        taskAssignModal({ cx, cy, fastMap });
+      },
     }
   );
+
+  // 添加围栏
+  for (const f of fences) {
+    const fence = new FastMap.Fence({
+      fastMap,
+      // 这里的key是唯一标识，不可重复
+      key: f.id,
+      // 这里的points是围栏的点位，是一个FastMap.Coordinates实例数组
+      polygon: f.points.map(
+        (p) => new FastMap.Coordinates(p[0], p[1], 0, SCALE)
+      ),
+      // 这里的type是围栏的类型，是一个字符串，可选值有"boundary"、"obstacle"，表示边界和障碍物
+      type: f.type === 0 ? "boundary" : "obstacle",
+    });
+    fastMap.addFences([fence]);
+  }
 
   // 添加点位
   for (const point of points) {
@@ -70,7 +245,7 @@ async function init() {
       // 这里的key是唯一标识，不可重复
       key: point.id,
       // 这里的center是点位的中心点，是一个FastMap.Coordinates实例
-      center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0, 0.01),
+      center: new FastMap.Coordinates(point.pos[0], point.pos[1], 0, SCALE),
       // 这里的type是点位的类型，是一个字符串，可选值有"charge"、"task"、"return"，表示充电点、任务点、掉头点
       type:
         point.type === 3
@@ -108,9 +283,28 @@ async function init() {
   // 地图初始化
   fastMap.initiate();
 
+  window.debug = () => {
+    fastMap.debug = true;
+    fastMap.initiate();
+    return "开启调试模式！";
+  };
+
   return fastMap;
 }
 init().then((fastMap) => {
+  fastMap.addRobot(
+    new FastMap.Robot({
+      key: "test1",
+      center: new FastMap.Coordinates(10000, 2000, 0, SCALE),
+    })
+  );
+  fastMap.addRobot(
+    new FastMap.Robot({
+      key: "test2",
+      center: new FastMap.Coordinates(15000, 3000, 0, SCALE),
+    })
+  );
+
   const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
   // 监听机器人状态信息
   robotStatusSocket.onData((e) => {
@@ -138,39 +332,6 @@ init().then((fastMap) => {
       );
     }
   });
-  // // 定时更新路径规划
-  // setInterval(async () => {
-  //   const robotKeys = fastMap.shapes.robots.map((r) => r.key);
-  //   const highlightPointList = [];
-  //   const highlightLineList = [];
-  //   for (const robotKey of robotKeys) {
-  //     const plan = await mapDataFetcher.getNavigationPlan(robotKey);
-  //     if (plan) {
-  //       highlightPointList.push(plan.point);
-  //       highlightLineList.push(...plan.path);
-  //     }
-  //   }
-  //   // 除了取得的路径和点位外，还需要把路径经过的点位也高亮一下
-  //   const points = fastMap.shapes.roads.filter((r) =>
-  //     highlightLineList.includes(r.key)
-  //   );
-  //   for (const point of points) {
-  //     highlightPointList.push(point.begin, point.end);
-  //   }
-  //   const highlights = new FastMap.Highlights({
-  //     fastMap,
-  //     robotKeys: [],
-  //     roadKeys: highlightLineList,
-  //     waypointKeys: highlightPointList,
-  //     // 机器人的高亮样式，变大+红色
-  //     robotRectOptions: { height: 14, width: 14, fill: "red" },
-  //     // 路径的高亮样式，加粗线
-  //     roadOptions: { strokeWidth: 10 },
-  //     // 点位的高亮样式，半径加大
-  //     waypointOptions: { radius: 10 },
-  //   });
-  //   fastMap.highlight(highlights);
-  // }, 3000);
 });
 
 function resizeCanvas() {
@@ -180,10 +341,18 @@ function resizeCanvas() {
 }
 // 在页面加载时调整 canvas 大小
 window.onload = resizeCanvas;
-// 当窗口大小改变时，重新调整 canvas 大小
-window.onresize = resizeCanvas;
 
 function genMapDataFetcher(tid) {
+  /**
+   * @typedef {{ id: number, points: [number, number][], type: 0|1 }} Fence
+   * @returns {Promise<Fence[]>} 返回一个Promise对象，resolve的值是一个数组，数组的每个元素是一个对象，对象的属性包括
+   */
+  async function getMapFences() {
+    const res = await fetch(`${HTTP_SEVER_HOST}/patro/map/fence?tid=${tid}`);
+    const data = await res.json();
+    return data.fence;
+  }
+
   /**
    * @typedef {{ id: number, name: string, pos: [number,number,number], type: number }} Point
    * @returns {Promise<Point[]>} 返回一个Promise对象，resolve的值是一个数组，数组的每个元素是一个对象，对象的属性包括
@@ -212,14 +381,30 @@ function genMapDataFetcher(tid) {
    * @param {string} peri_id
    * @returns {{peri_id: string, point: number, path: number[]}}
    */
-  async function getNavigationPlan(peri_id) {
+  async function navigationPlan(peri_id) {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
       method: "POST",
-      body: { tid, peri_id: peri_id },
+      body: JSON.stringify({ tid, peri_id: peri_id }),
+      json: true,
     });
     const data = await res.json();
     // if (data.csq !== 1) return {};
     return { peri_id: data.peri_id, point: data.point, path: data.path };
+  }
+
+  /**
+   *
+   * @param {string} peri_id
+   * @returns {{peri_id: string, point: number, path: number[]}}
+   */
+  async function navigationStop(peri_id) {
+    const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/stop`, {
+      method: "POST",
+      body: JSON.stringify({ tid, peri_id: peri_id }),
+      json: true,
+    });
+    const data = await res.json();
+    return data;
   }
 
   /**
@@ -242,9 +427,11 @@ function genMapDataFetcher(tid) {
   }
 
   return {
+    getMapFences,
     getMapPoints,
     getMapLines,
-    getNavigationPlan,
+    navigationPlan,
+    navigationStop,
     createRobotStatusSocket,
   };
 }

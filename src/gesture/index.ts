@@ -39,6 +39,33 @@ export const draggable = (canvas: fabric.Canvas) => {
   });
 };
 
+export const clickable = (
+  canvas: fabric.Canvas,
+  handler: (e: fabric.IEvent<MouseEvent>) => void
+) => {
+  let lastX = 0;
+  let lastY = 0;
+
+  canvas.on("mouse:down", (event) => {
+    const e = event.e;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  canvas.on("mouse:up", (event) => {
+    if (event.e.clientX === lastX && event.e.clientY === lastY) {
+      handler(event);
+    }
+  });
+};
+
+export const doubleClickable = (
+  canvas: fabric.Canvas,
+  handler: (e: fabric.IEvent<MouseEvent>) => void
+) => {
+  canvas.on("mouse:dblclick", handler);
+};
+
 export const scalable = (canvas: fabric.Canvas) => {
   canvas.on("mouse:wheel", (event) => {
     const e = event.e as WheelEvent;

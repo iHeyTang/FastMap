@@ -57,6 +57,8 @@ export class Robot {
       ...this.fastMap?.config?.draw?.Robot,
       ...this.dynamicTextOptions,
     });
+    shape.hasBorders = shape.hasControls = false;
+
     this.shapes = [shape, text];
     this.fastMap?.canvas?.add(...this.shapes);
   }

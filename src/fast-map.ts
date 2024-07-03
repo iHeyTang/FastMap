@@ -1,7 +1,9 @@
 import { fabric } from "fabric";
-import { draggable, scalable } from "./gesture";
+import { clickable, doubleClickable, draggable, scalable } from "./gesture";
 import {
   Coordinates,
+  Fence,
+  FenceType,
   Road,
   RoadGait,
   RoadMode,
@@ -21,6 +23,7 @@ export type FastMapConfig = {
     }) => fabric.ILineOptions;
     WayPoint: (props: { type: WayPointType }) => fabric.ILineOptions;
     Robot: () => fabric.IRectOptions;
+    Fence: (props: { type: FenceType }) => fabric.ILineOptions;
   };
 };
 
@@ -28,7 +31,10 @@ export default class FastMap {
   canvas: fabric.Canvas;
   config: FastMapConfig;
 
+  debug?: boolean;
+
   shapes: {
+    fences: Fence[];
     roads: Road[];
     waypoints: WayPoint[];
     robots: Robot[];
@@ -38,14 +44,54 @@ export default class FastMap {
 
   constructor(
     element: HTMLCanvasElement | string | null,
-    options: fabric.ICanvasOptions & { fastMapConfig: FastMapConfig }
+    options: fabric.ICanvasOptions & {
+      fastMapConfig: FastMapConfig;
+      onFastMapClick?: (
+        e: fabric.IEvent<MouseEvent> & {
+          cx: number;
+          cy: number;
+          fastMap: FastMap;
+        }
+      ) => void;
+      onFastMapDoubleClick?: (
+        e: fabric.IEvent<MouseEvent> & {
+          cx: number;
+          cy: number;
+          fastMap: FastMap;
+        }
+      ) => void;
+      onFastMapRobotClick?: (
+        e: fabric.IEvent<MouseEvent> & {
+          robotKey: string;
+          fastMap: FastMap;
+        }
+      ) => void;
+    }
   ) {
-    this.shapes = { roads: [], waypoints: [], robots: [] };
+    this.shapes = { fences: [], roads: [], waypoints: [], robots: [] };
     const { fastMapConfig, ...canvasOptions } = options;
     this.canvas = new fabric.Canvas(element, canvasOptions);
     this.config = fastMapConfig;
     draggable(this.canvas);
     scalable(this.canvas);
+    clickable(this.canvas, (event) => {
+      // 获取在canvas中的点击坐标
+      // 这个坐标没办法直接取得，所以需要通过计算得到
+      // 计算方式为 鼠标点击坐标 - canvas的偏移量
+      const [cx, cy] = [
+        (event.pointer?.x || 0) - (this.canvas.viewportTransform?.[4] || 0),
+        (event.pointer?.y || 0) - (this.canvas.viewportTransform?.[5] || 0),
+      ];
+      options.onFastMapClick?.({ ...event, cx, cy, fastMap: this });
+    });
+
+    doubleClickable(this.canvas, (event) => {
+      const [cx, cy] = [
+        (event.pointer?.x || 0) - (this.canvas.viewportTransform?.[4] || 0),
+        (event.pointer?.y || 0) - (this.canvas.viewportTransform?.[5] || 0),
+      ];
+      options.onFastMapDoubleClick?.({ ...event, cx, cy, fastMap: this });
+    });
   }
 
   moveRobotTo(robotKey: string, coordinates: Coordinates) {
@@ -53,6 +99,13 @@ export default class FastMap {
     if (robot) {
       robot.moveTo(coordinates);
     }
+  }
+
+  addFences(fences: Fence[]) {
+    for (const f of fences) {
+      f.fastMap = this;
+    }
+    this.shapes.fences.push(...fences);
   }
 
   addRoads(roads: Road[]) {
@@ -85,6 +138,11 @@ export default class FastMap {
     this.canvas.viewportTransform![4] = -center.x + this.canvas.getWidth() / 2;
     // biome-ignore lint/style/noNonNullAssertion: <explanation>
     this.canvas.viewportTransform![5] = center.y + this.canvas.getHeight() / 2;
+
+    for (let i = 0; i < this.shapes.fences.length; i++) {
+      this.shapes.fences[i].fastMap = this;
+      this.shapes.fences[i].draw();
+    }
 
     for (let i = 0; i < this.shapes.roads.length; i++) {
       this.shapes.roads[i].fastMap = this;
@@ -128,6 +186,9 @@ export default class FastMap {
       ];
       if (begin) points.push(begin);
       if (end) points.push(end);
+    }
+    for (let i = 0; i < this.shapes.fences.length; i++) {
+      points.push(...this.shapes.fences[i].polygon);
     }
     return points;
   }

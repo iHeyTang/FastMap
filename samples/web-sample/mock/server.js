@@ -38,6 +38,14 @@ const init = async () => {
   });
 
   server.route({
+    method: "GET",
+    path: "/patro/map/fence",
+    handler: (request) => {
+      return mock.fence;
+    },
+  });
+
+  server.route({
     method: "POST",
     path: "/patro/navigation/plan",
     handler: (request) => {
@@ -51,6 +59,14 @@ const init = async () => {
         point: point.id,
         path: path.map((p) => p.id),
       };
+    },
+  });
+
+  server.route({
+    method: "POST",
+    path: "/patro/navigation/stop",
+    handler: () => {
+      return { csq: 1, msg: "ok" };
     },
   });
 
