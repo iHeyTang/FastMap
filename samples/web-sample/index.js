@@ -1,4 +1,4 @@
-const HOST = "localhost:3000";
+const HOST = "122.224.165.90:39014";
 const HTTP_SEVER_HOST = `http://${HOST}`;
 const WS_SERVER_HOST = `ws://${HOST}/ws`;
 
@@ -346,7 +346,8 @@ init().then((fastMap) => {
           center: new FastMap.Coordinates(
             data.status.pos[0],
             data.status.pos[1],
-            data.status.pos[2] || 0
+            data.status.pos[2] || 0,
+            SCALE
           ),
         })
       );
@@ -356,7 +357,8 @@ init().then((fastMap) => {
         new FastMap.Coordinates(
           data.status.pos[0],
           data.status.pos[1],
-          data.status.pos[2]
+          data.status.pos[2],
+          SCALE
         )
       );
     }
