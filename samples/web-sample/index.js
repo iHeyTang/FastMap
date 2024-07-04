@@ -1,5 +1,5 @@
-const HTTP_SEVER_HOST = "http://localhost:3000";
-const WS_SERVER_HOST = "ws://localhost:3000/ws";
+const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
+const WS_SERVER_HOST = "ws://122.224.165.90:39014/ws";
 
 const search = window.location.search;
 const tid = search.slice(0).split("=")[1];
@@ -402,14 +402,23 @@ function genMapDataFetcher(tid) {
    * @returns {Promise<{peri_id: string, point: number, path: number[]}>}
    */
   async function navigationPlan(peri_id, point) {
-    const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
-      method: "POST",
-      body: JSON.stringify({ tid, peri_id: peri_id, point }),
-      json: true,
-    });
-    const data = await res.json();
-    // if (data.csq !== 1) return {};
-    return { peri_id: data.peri_id, point: data.point, path: data.path };
+    try {
+      const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
+        method: "POST",
+        body: JSON.stringify({ tid, peri_id: peri_id, point }),
+        json: true,
+      });
+      const data = await res.json();
+      // if (data.csq !== 1) return {};
+      return {
+        code: data.code,
+        peri_id: data.peri_id,
+        point: data.point,
+        path: data.path,
+      };
+    } catch (e) {
+      return {};
+    }
   }
 
   /**
@@ -418,13 +427,17 @@ function genMapDataFetcher(tid) {
    * @returns {Promise<{peri_id: string, point: number, path: number[]}>}
    */
   async function navigationStop(peri_id) {
-    const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/stop`, {
-      method: "POST",
-      body: JSON.stringify({ tid, peri_id: peri_id }),
-      json: true,
-    });
-    const data = await res.json();
-    return data;
+    try {
+      const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/stop`, {
+        method: "POST",
+        body: JSON.stringify({ tid, peri_id: peri_id }),
+        json: true,
+      });
+      const data = await res.json();
+      return data;
+    } catch (e) {
+      return { code: 1 };
+    }
   }
 
   /**

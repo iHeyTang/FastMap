@@ -71,8 +71,6 @@ export class Road {
   }
 
   get beginCoordinates() {
-    if (typeof this.begin !== "object")
-      console.log(this.fastMap?.getWayPoint(this.begin));
     return typeof this.begin !== "object"
       ? this.fastMap?.getWayPoint(this.begin)?.center
       : this.begin;
