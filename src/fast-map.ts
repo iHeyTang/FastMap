@@ -109,7 +109,7 @@ export default class FastMap {
         if (e.target?.type === "circle") {
           const waypoint = this.getWayPoint(e.target);
           if (waypoint) {
-            waypoint.setDynamicOptions({ fill: "red", stroke: "red" });
+            waypoint.hover(true);
             this.hovering = waypoint.key;
           }
         }
@@ -121,7 +121,7 @@ export default class FastMap {
         if (this.hovering) {
           const waypoint = this.getWayPoint(this.hovering);
           if (waypoint) {
-            waypoint.setDynamicOptions({});
+            waypoint.hover(false);
           }
           this.hovering = undefined;
         }

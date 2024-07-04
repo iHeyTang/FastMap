@@ -14,6 +14,8 @@ export class WayPoint {
 
   key: string;
 
+  hovering?: boolean;
+
   /**
    * 点位类型
    * charge: 充电点
@@ -50,6 +52,9 @@ export class WayPoint {
       hoverCursor: "pointer",
       ...this.fastMap?.config?.draw?.WayPoint({ type: this.type }),
       ...this.dynamicOptions,
+      ...(this.hovering
+        ? { fill: "#099268", stroke: "#099268", radius: 8 }
+        : {}),
     });
     circle.hasControls = false;
     this.shapes = [circle];
@@ -58,6 +63,12 @@ export class WayPoint {
 
   setDynamicOptions(options: fabric.ILineOptions) {
     this.dynamicOptions = options;
+    if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
+    this.draw();
+  }
+
+  hover(hover: boolean) {
+    this.hovering = hover;
     if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
     this.draw();
   }
