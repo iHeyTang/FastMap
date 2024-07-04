@@ -197,7 +197,7 @@ async function init() {
           Fence: ({ type }) => {
             return {
               zIndex: -100,
-              fill: type === "boundary" ? "#a5d8ff" : "#f0f0f0",
+              fill: type === "boundary" ? "#868e96" : "#f0f0f0",
             };
           },
           // 如有相同的参数定义，gait > speed > mode

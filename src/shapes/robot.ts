@@ -1,7 +1,7 @@
 import { fabric } from "fabric";
 import { Coordinates } from "./base";
 import FastMap from "../fast-map";
-import Avatar from "./avatar.png";
+import Avatar from "./avatar.jpg";
 
 /**
  * 机器人

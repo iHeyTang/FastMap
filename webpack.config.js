@@ -17,7 +17,8 @@ module.exports = {
           {
             loader: "file-loader",
             options: {
-              outputPath: "images", // 指定打包后的图片位置
+              name: "[name].[ext]", // 保持文件名不变
+              outputPath: "assets", // 指定打包后的图片位置
             },
           },
         ],
