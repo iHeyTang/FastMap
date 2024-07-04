@@ -7,7 +7,7 @@ const tid = search.slice(0).split("=")[1];
 
 const mapDataFetcher = genMapDataFetcher(tid);
 
-const SCALE = 0.006;
+const SCALE = 0.01;
 
 // --------------------------------------------------
 // 以下为正式的demo代码
@@ -304,6 +304,10 @@ async function init() {
 
   // 地图初始化
   fastMap.initiate();
+  fastMap.canvas.zoomToPoint(
+    { x: fastMap.getMapCenter().x, y: fastMap.getMapCenter().y },
+    0.7
+  );
 
   window.debug = () => {
     fastMap.debug = true;
@@ -318,12 +322,14 @@ init().then((fastMap) => {
     new FastMap.Robot({
       key: "test1",
       center: new FastMap.Coordinates(10000, 2000, 0, SCALE),
+      angle: 190,
     })
   );
   fastMap.addRobot(
     new FastMap.Robot({
       key: "test2",
       center: new FastMap.Coordinates(15000, 3000, 0, SCALE),
+      angle: 70,
     })
   );
 

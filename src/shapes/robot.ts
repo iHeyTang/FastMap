@@ -1,6 +1,7 @@
 import { fabric } from "fabric";
 import { Coordinates } from "./base";
 import FastMap from "../fast-map";
+import Avatar from "./avatar.png";
 
 /**
  * 机器人
@@ -14,6 +15,8 @@ export class Robot {
 
   center: Coordinates;
 
+  angle: number;
+
   /**
    * 动态参数，用于动态调整路径样式，如路径颜色、宽度等
    */
@@ -21,31 +24,42 @@ export class Robot {
 
   private dynamicTextOptions: fabric.ITextOptions = {};
 
-  constructor(props: { key: string; fastMap: FastMap; center: Coordinates }) {
+  constructor(props: {
+    key: string;
+    fastMap: FastMap;
+    center: Coordinates;
+    angle?: number;
+  }) {
     this.fastMap = props.fastMap;
     this.key = props.key;
     this.center = props.center;
+    this.angle = props.angle || 0;
   }
 
-  moveTo(center: Coordinates) {
+  moveTo(center: Coordinates, angle?: number) {
     this.center = center;
+    this.angle = angle || this.angle;
     if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
     this.draw();
   }
 
   draw() {
-    const shape = new fabric.Rect({
-      width: 5,
-      height: 5,
-      originX: "center",
-      originY: "center",
-      left: this.center.x,
-      top: -this.center.y,
-      fill: "black",
-      selectable: false,
-      ...this.fastMap?.config?.draw?.Robot(),
-      ...this.dynamicRectOptions,
+    fabric.Image.fromURL(Avatar, (img) => {
+      console.log("🚀 ~ Robot ~ draw ~ img:", img);
+      img.scale(0.5).set({
+        scaleX: 0.05,
+        scaleY: 0.05,
+        left: this.center.x,
+        top: -this.center.y,
+        angle: this.angle,
+      });
+      img.lockScalingFlip = true;
+      img.minScaleLimit = 0.025;
+      img.padding = 5;
+      img.hoverCursor = "crossHair";
+      this.fastMap?.canvas?.add(img);
     });
+
     const text = new fabric.Text(this.key, {
       originX: "center",
       originY: "center",
@@ -57,9 +71,8 @@ export class Robot {
       ...this.fastMap?.config?.draw?.Robot,
       ...this.dynamicTextOptions,
     });
-    shape.hasBorders = shape.hasControls = false;
 
-    this.shapes = [shape, text];
+    this.shapes = [text];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
