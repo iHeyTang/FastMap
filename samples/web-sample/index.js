@@ -1,5 +1,6 @@
-const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
-const WS_SERVER_HOST = "ws://122.224.165.90:39014/ws";
+const HOST = "localhost:3000";
+const HTTP_SEVER_HOST = `http://${HOST}`;
+const WS_SERVER_HOST = `ws://${HOST}/ws`;
 
 const search = window.location.search;
 const tid = search.slice(0).split("=")[1];
