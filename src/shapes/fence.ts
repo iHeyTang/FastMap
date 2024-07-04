@@ -68,7 +68,7 @@ export class Fence {
             {
               originX: "center",
               originY: "center",
-              fontSize: 12,
+              fontSize: 8,
               left: c.x,
               top: -c.y + 12,
               text: `${index}(${c.x.toFixed(4)},${-c.y.toFixed(4)})`,

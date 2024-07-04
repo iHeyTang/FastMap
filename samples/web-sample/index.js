@@ -118,13 +118,13 @@ const taskAssignModal = (e) => {
             fastMap,
             robotKeys: [],
             roadKeys: res.path,
-            waypointKeys: res.point,
+            waypointKeys: [res.point],
             // 机器人的高亮样式，变大+红色
             robotRectOptions: { height: 14, width: 14, fill: "red" },
             // 路径的高亮样式，加粗线
-            roadOptions: { strokeWidth: 10 },
+            roadOptions: { fill: "red", stroke: "red", strokeWidth: 10 },
             // 点位的高亮样式，半径加大
-            waypointOptions: { radius: 10 },
+            waypointOptions: { radius: 10, fill: "red" },
           });
           fastMap.highlight(highlights);
         }, 0);
@@ -147,7 +147,6 @@ const taskAssignModal = (e) => {
 
     ending.onclick = async () => {
       const res = await mapDataFetcher.navigationStop(r.key);
-      console.log("🚀 ~ taskAssignModal ~ res:", res);
       if (res.code === 0) {
         // 关闭窗口
         mask.remove();

@@ -102,6 +102,8 @@ export class Road {
       {
         evented: false,
         selectable: false,
+        hasControls: false,
+        hasBorders: false,
         hoverCursor: "default",
         originX: "center",
         originY: "center",
@@ -113,8 +115,44 @@ export class Road {
         ...this.dynamicOptions,
       }
     );
-    line.hasBorders = line.hasControls = false;
-    this.shapes = [line];
+
+    const title = new fabric.Text(`${this.key}`, {
+      evented: false,
+      hasBorders: false,
+      hasControls: false,
+      originX: "center",
+      originY: "center",
+      fontSize: 12,
+      left: ((begin?.x || 0) + (end?.x || 0)) / 2,
+      top: -((begin?.y || 0) + (end?.y || 0)) / 2,
+      text: `${this.key}`,
+      hoverCursor: "default",
+      selectable: false,
+    });
+
+    const dots = this.fastMap?.debug
+      ? [begin, end].map((c) => {
+          const text = new fabric.Text(
+            `(${c?.x.toFixed(4)},${-(c?.y.toFixed(4) || 0)})`,
+            {
+              evented: false,
+              hasBorders: false,
+              hasControls: false,
+              originX: "center",
+              originY: "center",
+              fontSize: 8,
+              left: c?.x,
+              top: -(c?.y || 0) + 12,
+              text: `(${c?.x.toFixed(4)},${-(c?.y || 0).toFixed(4)})`,
+              hoverCursor: "default",
+              selectable: false,
+            }
+          );
+          return text;
+        })
+      : [];
+
+    this.shapes = [line, ...dots, title];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
