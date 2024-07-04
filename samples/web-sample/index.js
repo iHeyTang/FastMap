@@ -114,11 +114,20 @@ const taskAssignModal = (e) => {
               ? `任务派遣成功，机器人${r.key}已经开始前往点位(id: ${waypointKey})`
               : `任务派遣成功，机器人${r.key}已经开始前往坐标(${x}, ${y})`
           );
+
+          const points = [...res.path, res.point];
+          // 通过点位id获取关联的路径
+          const roadKeys = fastMap.shapes.roads
+            .filter((r) => {
+              return points.includes(r.begin) && points.includes(r.end);
+            })
+            .map((r) => r.key);
+
           const highlights = new FastMap.Highlights({
             fastMap,
             robotKeys: [],
-            roadKeys: res.path,
-            waypointKeys: [res.point],
+            roadKeys: roadKeys,
+            waypointKeys: points,
             // 机器人的高亮样式，变大+红色
             robotRectOptions: { height: 14, width: 14, fill: "red" },
             // 路径的高亮样式，加粗线
