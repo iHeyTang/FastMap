@@ -71,6 +71,8 @@ export class Road {
   }
 
   get beginCoordinates() {
+    if (typeof this.begin !== "object")
+      console.log(this.fastMap?.getWayPoint(this.begin));
     return typeof this.begin !== "object"
       ? this.fastMap?.getWayPoint(this.begin)?.center
       : this.begin;
@@ -100,6 +102,9 @@ export class Road {
     const line = new fabric.Line(
       [begin?.x || 0, -(begin?.y || 0), end?.x || 0, -(end?.y || 0)],
       {
+        evented: false,
+        selectable: false,
+        hoverCursor: "default",
         originX: "center",
         originY: "center",
         ...this.fastMap?.config?.draw?.Road({

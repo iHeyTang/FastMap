@@ -1,5 +1,5 @@
-const HTTP_SEVER_HOST = "http://122.224.165.90:39014";
-const WS_SERVER_HOST = "ws://localhost:3001";
+const HTTP_SEVER_HOST = "http://localhost:3000";
+const WS_SERVER_HOST = "ws://localhost:3000/ws";
 
 const search = window.location.search;
 const tid = search.slice(0).split("=")[1];
@@ -16,7 +16,7 @@ const SCALE = 0.006;
  * 机器人分配任务的窗口，由画布点击事件触发
  */
 const taskAssignModal = (e) => {
-  const { cx, cy, fastMap } = e;
+  const { waypointKey, cx = 0, cy = 0, fastMap } = e;
   const x = Number((cx / SCALE).toFixed(4));
   const y = Number((cy / SCALE).toFixed(4));
 
@@ -59,7 +59,9 @@ const taskAssignModal = (e) => {
   body.appendChild(title);
   body.appendChild(
     document.createTextNode(
-      `坐标 (${x}, ${y})，请选择机器人派遣任务，或中止已有任务`
+      waypointKey === 0 || waypointKey
+        ? `点位 ${waypointKey}，请选择机器人派遣任务，或中止已有任务`
+        : `坐标 (${x}, ${y})，请选择机器人派遣任务，或中止已有任务`
     )
   );
   body.onclick = (e) => {
@@ -97,14 +99,21 @@ const taskAssignModal = (e) => {
     );
     robotDoTask.appendChild(robotPos);
 
-    robotDoTask.onclick = () => {
-      const res = mapDataFetcher.navigationPlan(r.key);
-      if (res.csq === 1) {
+    robotDoTask.onclick = async () => {
+      const res = await mapDataFetcher.navigationPlan(
+        r.key,
+        waypointKey ?? [x, y]
+      );
+      if (res.code === 0) {
         // 关闭窗口
         mask.remove();
         setTimeout(() => {
           // 轻提示
-          alert(`任务派遣成功，机器人${r.key}已经开始前往(${x}, ${y})点位`);
+          alert(
+            waypointKey === 0 || waypointKey
+              ? `任务派遣成功，机器人${r.key}已经开始前往点位(id: ${waypointKey})`
+              : `任务派遣成功，机器人${r.key}已经开始前往坐标(${x}, ${y})`
+          );
           const highlights = new FastMap.Highlights({
             fastMap,
             robotKeys: [],
@@ -136,9 +145,10 @@ const taskAssignModal = (e) => {
     ending.style.width = "60px";
     ending.appendChild(document.createTextNode("中止"));
 
-    ending.onclick = () => {
-      const res = mapDataFetcher.navigationStop(r.key);
-      if (res.csq === 1) {
+    ending.onclick = async () => {
+      const res = await mapDataFetcher.navigationStop(r.key);
+      console.log("🚀 ~ taskAssignModal ~ res:", res);
+      if (res.code === 0) {
         // 关闭窗口
         mask.remove();
         setTimeout(() => {
@@ -218,6 +228,9 @@ async function init() {
       onFastMapDoubleClick: (e) => {
         const { cx, cy, fastMap } = e;
         taskAssignModal({ cx, cy, fastMap });
+      },
+      onFastMapWaypointDoubleClick: (e) => {
+        taskAssignModal({ waypointKey: e.waypointKey, fastMap });
       },
     }
   );
@@ -305,6 +318,13 @@ init().then((fastMap) => {
     })
   );
 
+  fastMap.addRobot(
+    new FastMap.Robot({
+      key: "R24060500001@RBDP00X20",
+      center: new FastMap.Coordinates(20000, 4000, 0, SCALE),
+    })
+  );
+
   const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
   // 监听机器人状态信息
   robotStatusSocket.onData((e) => {
@@ -379,12 +399,12 @@ function genMapDataFetcher(tid) {
   /**
    *
    * @param {string} peri_id
-   * @returns {{peri_id: string, point: number, path: number[]}}
+   * @returns {Promise<{peri_id: string, point: number, path: number[]}>}
    */
-  async function navigationPlan(peri_id) {
+  async function navigationPlan(peri_id, point) {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
       method: "POST",
-      body: JSON.stringify({ tid, peri_id: peri_id }),
+      body: JSON.stringify({ tid, peri_id: peri_id, point }),
       json: true,
     });
     const data = await res.json();
@@ -395,7 +415,7 @@ function genMapDataFetcher(tid) {
   /**
    *
    * @param {string} peri_id
-   * @returns {{peri_id: string, point: number, path: number[]}}
+   * @returns {Promise<{peri_id: string, point: number, path: number[]}>}
    */
   async function navigationStop(peri_id) {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/navigation/stop`, {

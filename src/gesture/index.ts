@@ -15,12 +15,14 @@ export const draggable = (canvas: fabric.Canvas) => {
       const deltaX = currentX - lastX;
       const deltaY = currentY - lastY;
 
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      canvas.viewportTransform![4] += deltaX;
-      // biome-ignore lint/style/noNonNullAssertion: <explanation>
-      canvas.viewportTransform![5] += deltaY;
-
-      canvas.requestRenderAll();
+      const viewportTransform = [...(canvas.viewportTransform || [])];
+      if (typeof viewportTransform[4] === "number") {
+        viewportTransform[4] += deltaX;
+      }
+      if (typeof viewportTransform[5] === "number") {
+        viewportTransform[5] += deltaY;
+      }
+      canvas.setViewportTransform(viewportTransform);
 
       lastX = currentX;
       lastY = currentY;

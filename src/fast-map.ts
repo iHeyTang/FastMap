@@ -27,6 +27,27 @@ export type FastMapConfig = {
   };
 };
 
+/**
+ * 防抖函数
+ * @param fn
+ * @param delay
+ */
+const antiShake = <T extends (...args: never[]) => void>(
+  fn: T,
+  delay: number
+) => {
+  let timer: NodeJS.Timeout | null = null;
+  return (...args: Parameters<T>) => {
+    if (timer) {
+      clearTimeout(timer);
+    }
+    timer = setTimeout(() => {
+      fn(...args);
+      timer = null;
+    }, delay);
+  };
+};
+
 export default class FastMap {
   canvas: fabric.Canvas;
   config: FastMapConfig;
@@ -41,6 +62,8 @@ export default class FastMap {
   };
 
   highlights?: Highlights;
+
+  hovering?: string;
 
   constructor(
     element: HTMLCanvasElement | string | null,
@@ -66,6 +89,12 @@ export default class FastMap {
           fastMap: FastMap;
         }
       ) => void;
+      onFastMapWaypointDoubleClick?: (
+        e: fabric.IEvent<MouseEvent> & {
+          waypointKey: string;
+          fastMap: FastMap;
+        }
+      ) => void;
     }
   ) {
     this.shapes = { fences: [], roads: [], waypoints: [], robots: [] };
@@ -74,6 +103,31 @@ export default class FastMap {
     this.config = fastMapConfig;
     draggable(this.canvas);
     scalable(this.canvas);
+
+    this.canvas.on("mouse:over", (e) => {
+      antiShake(() => {
+        if (e.target?.type === "circle") {
+          const waypoint = this.getWayPoint(e.target);
+          if (waypoint) {
+            waypoint.setDynamicOptions({ fill: "red", stroke: "red" });
+            this.hovering = waypoint.key;
+          }
+        }
+      }, 200)();
+    });
+
+    this.canvas.on("mouse:out", (e) => {
+      antiShake(() => {
+        if (this.hovering) {
+          const waypoint = this.getWayPoint(this.hovering);
+          if (waypoint) {
+            waypoint.setDynamicOptions({});
+          }
+          this.hovering = undefined;
+        }
+      }, 200)();
+    });
+
     clickable(this.canvas, (event) => {
       // 获取在canvas中的点击坐标
       // 这个坐标没办法直接取得，所以需要通过计算得到
@@ -90,7 +144,19 @@ export default class FastMap {
         (event.pointer?.x || 0) - (this.canvas.viewportTransform?.[4] || 0),
         (event.pointer?.y || 0) - (this.canvas.viewportTransform?.[5] || 0),
       ];
-      options.onFastMapDoubleClick?.({ ...event, cx, cy, fastMap: this });
+      const object = this.canvas.getActiveObject();
+      if (object?.type === "circle") {
+        const waypoint = this.getWayPoint(object);
+        if (waypoint) {
+          options.onFastMapWaypointDoubleClick?.({
+            ...event,
+            waypointKey: waypoint.key,
+            fastMap: this,
+          });
+        }
+      } else {
+        options.onFastMapDoubleClick?.({ ...event, cx, cy, fastMap: this });
+      }
     });
   }
 
@@ -134,10 +200,10 @@ export default class FastMap {
 
   initiate() {
     const center = this.getMapCenter();
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    this.canvas.viewportTransform![4] = -center.x + this.canvas.getWidth() / 2;
-    // biome-ignore lint/style/noNonNullAssertion: <explanation>
-    this.canvas.viewportTransform![5] = center.y + this.canvas.getHeight() / 2;
+    const viewportTransform = this.canvas.viewportTransform || [];
+    viewportTransform[4] = -center.x + this.canvas.getWidth() / 2;
+    viewportTransform[5] = center.y + this.canvas.getHeight() / 2;
+    this.canvas.setViewportTransform(viewportTransform);
 
     for (let i = 0; i < this.shapes.fences.length; i++) {
       this.shapes.fences[i].fastMap = this;
@@ -170,7 +236,10 @@ export default class FastMap {
     return this.shapes.roads.find((r) => r.key === key);
   }
 
-  getWayPoint(key: string) {
+  getWayPoint(key: string | fabric.Object) {
+    if (typeof key === "object" && key.type === "circle") {
+      return this.shapes.waypoints.find((w) => w.shapes.includes(key));
+    }
     return this.shapes.waypoints.find((w) => w.key === key);
   }
 

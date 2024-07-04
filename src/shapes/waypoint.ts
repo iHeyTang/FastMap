@@ -47,10 +47,11 @@ export class WayPoint {
       top: -this.center.y,
       fill: undefined,
       strokeWidth: 1,
+      hoverCursor: "pointer",
       ...this.fastMap?.config?.draw?.WayPoint({ type: this.type }),
       ...this.dynamicOptions,
     });
-    circle.hasBorders = circle.hasControls = false;
+    circle.hasControls = false;
     this.shapes = [circle];
     this.fastMap?.canvas?.add(...this.shapes);
   }

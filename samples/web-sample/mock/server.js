@@ -41,7 +41,7 @@ const init = async () => {
     method: "GET",
     path: "/patro/map/fence",
     handler: (request) => {
-      return mock.fence;
+      return { fence: mock.fence };
     },
   });
 

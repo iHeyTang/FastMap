@@ -41,7 +41,9 @@ export class Fence {
       this.polygon.map((c) => ({ x: c.x, y: -c.y })),
       {
         fill: "rgba(0, 0, 0, 0.1)",
+        evented: false,
         selectable: false,
+        hoverCursor: "default",
         ...this.fastMap?.config?.draw?.Fence({ type: this.type }),
       }
     );
@@ -57,6 +59,7 @@ export class Fence {
             top: -c.y,
             fill: "red",
             selectable: false,
+            hoverCursor: "default",
           });
           dot.hasBorders = dot.hasControls = false;
 
@@ -69,6 +72,7 @@ export class Fence {
               left: c.x,
               top: -c.y + 12,
               text: `${index}(${c.x.toFixed(4)},${-c.y.toFixed(4)})`,
+              hoverCursor: "default",
               selectable: false,
             }
           );
