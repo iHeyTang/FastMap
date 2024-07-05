@@ -335,21 +335,6 @@ async function init() {
 init().then((fastMap) => {
   fastMap.addRobot(
     new FastMap.Robot({
-      key: "test1",
-      center: new FastMap.Coordinates(10000, -2000, 0, SCALE),
-      angle: 190,
-    })
-  );
-  fastMap.addRobot(
-    new FastMap.Robot({
-      key: "test2",
-      center: new FastMap.Coordinates(20000, -3000, 0, SCALE),
-      angle: 70,
-    })
-  );
-
-  fastMap.addRobot(
-    new FastMap.Robot({
       key: "R24060500001@RBDP00X20",
       center: new FastMap.Coordinates(40000, -4000, 0, SCALE),
     })
