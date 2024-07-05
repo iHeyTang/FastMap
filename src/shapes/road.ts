@@ -96,44 +96,46 @@ export class Road {
 
   draw() {
     const [begin, end] = [this.beginCoordinates, this.endCoordinates];
+    if (!begin || !end) return;
 
-    const line = new fabric.Line(
-      [begin?.x || 0, -(begin?.y || 0), end?.x || 0, -(end?.y || 0)],
-      {
-        evented: false,
-        selectable: false,
-        hasControls: false,
-        hasBorders: false,
-        hoverCursor: "default",
-        originX: "center",
-        originY: "center",
-        ...this.fastMap?.config?.draw?.Road({
-          mode: this.mode,
-          speed: this.speed,
-          gait: this.gait,
-        }),
-        ...this.dynamicOptions,
-      }
-    );
-
-    const title = new fabric.Text(`${this.key}`, {
+    const line = new fabric.Line([begin.x, begin.y, end.x, end.y], {
       evented: false,
-      hasBorders: false,
+      selectable: false,
       hasControls: false,
+      hasBorders: false,
+      hoverCursor: "default",
       originX: "center",
       originY: "center",
-      fontSize: 12,
-      left: ((begin?.x || 0) + (end?.x || 0)) / 2,
-      top: -((begin?.y || 0) + (end?.y || 0)) / 2,
-      text: `${this.key}`,
-      hoverCursor: "default",
-      selectable: false,
+      ...this.fastMap?.config?.draw?.Road({
+        mode: this.mode,
+        speed: this.speed,
+        gait: this.gait,
+      }),
+      ...this.dynamicOptions,
     });
+
+    const title = this.fastMap?.debug
+      ? [
+          new fabric.Text(`${this.key}`, {
+            evented: false,
+            hasBorders: false,
+            hasControls: false,
+            originX: "center",
+            originY: "center",
+            fontSize: 12,
+            left: (begin.x + end.x) / 2,
+            top: (begin.y + end.y) / 2,
+            text: `${this.key}`,
+            hoverCursor: "default",
+            selectable: false,
+          }),
+        ]
+      : [];
 
     const dots = this.fastMap?.debug
       ? [begin, end].map((c) => {
           const text = new fabric.Text(
-            `(${c?.x.toFixed(4)},${-(c?.y.toFixed(4) || 0)})`,
+            `(${c?.x.toFixed(4)},${c.y.toFixed(4)})`,
             {
               evented: false,
               hasBorders: false,
@@ -141,9 +143,9 @@ export class Road {
               originX: "center",
               originY: "center",
               fontSize: 8,
-              left: c?.x,
-              top: -(c?.y || 0) + 12,
-              text: `(${c?.x.toFixed(4)},${-(c?.y || 0).toFixed(4)})`,
+              left: c.x,
+              top: c.y + 12,
+              text: `(${c?.x.toFixed(4)},${c.y.toFixed(4)})`,
               hoverCursor: "default",
               selectable: false,
             }
@@ -152,7 +154,7 @@ export class Road {
         })
       : [];
 
-    this.shapes = [line, ...dots, title];
+    this.shapes = [line, ...dots, ...title];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 

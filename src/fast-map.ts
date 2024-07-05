@@ -1,5 +1,5 @@
 import { fabric } from "fabric";
-import { clickable, doubleClickable, draggable, scalable } from "./gesture";
+import { handleClick, handleDbClick, handleDrag, handleScale } from "./gesture";
 import {
   Coordinates,
   Fence,
@@ -13,9 +13,13 @@ import {
   WayPointType,
 } from "./shapes";
 import { Highlights } from "./shapes/highlights";
+import { Indicator } from "./shapes/indicator";
+import { antiShake } from "./utils";
 
 export type FastMapConfig = {
   draw: {
+    // 初始化取中心时感觉会有点偏移，原因暂时不明，这里加了一个偏移量
+    initOffset: [number, number];
     Road: (props: {
       mode: RoadMode;
       speed: RoadSpeed;
@@ -27,27 +31,6 @@ export type FastMapConfig = {
   };
 };
 
-/**
- * 防抖函数
- * @param fn
- * @param delay
- */
-const antiShake = <T extends (...args: never[]) => void>(
-  fn: T,
-  delay: number
-) => {
-  let timer: NodeJS.Timeout | null = null;
-  return (...args: Parameters<T>) => {
-    if (timer) {
-      clearTimeout(timer);
-    }
-    timer = setTimeout(() => {
-      fn(...args);
-      timer = null;
-    }, delay);
-  };
-};
-
 export default class FastMap {
   canvas: fabric.Canvas;
   config: FastMapConfig;
@@ -55,6 +38,7 @@ export default class FastMap {
   debug?: boolean;
 
   shapes: {
+    indicator: Indicator | null;
     fences: Fence[];
     roads: Road[];
     waypoints: WayPoint[];
@@ -69,104 +53,26 @@ export default class FastMap {
     element: HTMLCanvasElement | string | null,
     options: fabric.ICanvasOptions & {
       fastMapConfig: FastMapConfig;
-      onFastMapClick?: (
-        e: fabric.IEvent<MouseEvent> & {
-          cx: number;
-          cy: number;
-          fastMap: FastMap;
-        }
-      ) => void;
-      onFastMapDoubleClick?: (
-        e: fabric.IEvent<MouseEvent> & {
-          cx: number;
-          cy: number;
-          fastMap: FastMap;
-        }
-      ) => void;
-      onFastMapRobotClick?: (
-        e: fabric.IEvent<MouseEvent> & {
-          robotKey: string;
-          fastMap: FastMap;
-        }
-      ) => void;
-      onFastMapWaypointDoubleClick?: (
-        e: fabric.IEvent<MouseEvent> & {
-          waypointKey: string;
-          fastMap: FastMap;
-        }
-      ) => void;
     }
   ) {
-    this.shapes = { fences: [], roads: [], waypoints: [], robots: [] };
+    this.shapes = {
+      fences: [],
+      roads: [],
+      waypoints: [],
+      robots: [],
+      indicator: null,
+    };
     const { fastMapConfig, ...canvasOptions } = options;
-    this.canvas = new fabric.Canvas(element, canvasOptions);
+    this.canvas = new fabric.Canvas(element, {
+      ...canvasOptions,
+    });
     this.config = fastMapConfig;
-    draggable(this.canvas);
-    scalable(this.canvas);
-
-    this.canvas.on("mouse:over", (e) => {
-      antiShake(() => {
-        if (e.target?.type === "circle") {
-          const waypoint = this.getWayPoint(e.target);
-          if (waypoint) {
-            waypoint.hover(true);
-            this.hovering = waypoint.key;
-          }
-        }
-      }, 200)();
-    });
-
-    this.canvas.on("mouse:out", (e) => {
-      antiShake(() => {
-        if (this.hovering) {
-          const waypoint = this.getWayPoint(this.hovering);
-          if (waypoint) {
-            waypoint.hover(false);
-          }
-          this.hovering = undefined;
-        }
-      }, 200)();
-    });
-
-    clickable(this.canvas, (event) => {
-      // 获取在canvas中的点击坐标
-      // 这个坐标没办法直接取得，所以需要通过计算得到
-      // 计算方式为 鼠标点击坐标 - canvas的偏移量
-      const [cx, cy] = [
-        (event.pointer?.x || 0) - (this.canvas.viewportTransform?.[4] || 0),
-        (event.pointer?.y || 0) - (this.canvas.viewportTransform?.[5] || 0),
-      ];
-      options.onFastMapClick?.({ ...event, cx, cy, fastMap: this });
-    });
-
-    doubleClickable(this.canvas, (event) => {
-      const [cx, cy] = [
-        (event.pointer?.x || 0) - (this.canvas.viewportTransform?.[4] || 0),
-        (event.pointer?.y || 0) - (this.canvas.viewportTransform?.[5] || 0),
-      ];
-      const object = this.canvas.getActiveObject();
-      if (object?.type === "circle") {
-        const waypoint = this.getWayPoint(object);
-        if (waypoint) {
-          options.onFastMapWaypointDoubleClick?.({
-            ...event,
-            waypointKey: waypoint.key,
-            fastMap: this,
-          });
-        }
-      } else {
-        options.onFastMapDoubleClick?.({ ...event, cx, cy, fastMap: this });
-      }
-    });
   }
 
-  moveRobotTo(robotKey: string, coordinates: Coordinates) {
-    const robot = this.shapes.robots.find((r) => r.key === robotKey);
-    if (robot) {
-      robot.moveTo(coordinates);
-    }
-  }
-
+  /**
+   * 添加围栏
+   * @param fences
+   */
   addFences(fences: Fence[]) {
     for (const f of fences) {
       f.fastMap = this;
@@ -174,6 +80,10 @@ export default class FastMap {
     this.shapes.fences.push(...fences);
   }
 
+  /**
+   * 添加道路
+   * @param roads
+   */
   addRoads(roads: Road[]) {
     for (const r of roads) {
       r.fastMap = this;
@@ -181,6 +91,10 @@ export default class FastMap {
     this.shapes.roads.push(...roads);
   }
 
+  /**
+   * 添加路点
+   * @param waypoints
+   */
   addWaypoints(waypoints: WayPoint[]) {
     for (const w of waypoints) {
       w.fastMap = this;
@@ -188,6 +102,10 @@ export default class FastMap {
     this.shapes.waypoints.push(...waypoints);
   }
 
+  /**
+   * 添加机器人
+   * @param robot
+   */
   addRobot(robot: Robot) {
     const duplicate = this.shapes.robots.find((r) => r.key === robot.key);
     if (duplicate) {
@@ -198,11 +116,42 @@ export default class FastMap {
     robot.draw();
   }
 
+  /**
+   * 设置机器人位置
+   * @param robotKey
+   * @param coordinates
+   */
+  setRobotTo(robotKey: string, coordinates: Coordinates) {
+    const robot = this.shapes.robots.find((r) => r.key === robotKey);
+    if (robot) {
+      robot.moveTo(coordinates);
+    }
+  }
+
+  /**
+   * 地图视图初始化
+   */
   initiate() {
+    this.canvas.add(
+      new fabric.Circle({
+        evented: false,
+        radius: 1,
+        originX: "center",
+        originY: "center",
+        left: 0,
+        top: 0,
+        fill: "red",
+        selectable: false,
+        hoverCursor: "default",
+      })
+    );
+
     const center = this.getMapCenter();
     const viewportTransform = this.canvas.viewportTransform || [];
-    viewportTransform[4] = -center.x + this.canvas.getWidth() / 2;
-    viewportTransform[5] = center.y + this.canvas.getHeight() / 2;
+    viewportTransform[4] =
+      -center.x + this.canvas.getCenter().left + this.config.draw.initOffset[0];
+    viewportTransform[5] =
+      -center.y + this.canvas.getCenter().top + this.config.draw.initOffset[1];
     this.canvas.setViewportTransform(viewportTransform);
 
     for (let i = 0; i < this.shapes.fences.length; i++) {
@@ -230,6 +179,18 @@ export default class FastMap {
   clearHighlight() {
     this.highlights?.deHighlight();
     this.highlights = undefined;
+  }
+
+  indicate(
+    coordinates: Coordinates,
+    onIndicate: (e: fabric.IEvent, data: { angle: number }) => void
+  ) {
+    this.shapes.indicator = new Indicator({
+      fastMap: this,
+      center: coordinates,
+      onIndicate: onIndicate,
+    });
+    this.shapes.indicator.draw();
   }
 
   getRoad(key: string) {
@@ -290,5 +251,43 @@ export default class FastMap {
   getMapCenter() {
     const { x1, x2, y1, y2, z1, z2 } = this.getMapBound();
     return new Coordinates((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
+  }
+
+  initEventHandler(handlers: {
+    onFastMapClick?: (fastMap: FastMap, e: fabric.IEvent<MouseEvent>) => void;
+    onFastMapDbClick?: (fastMap: FastMap, e: fabric.IEvent<MouseEvent>) => void;
+  }) {
+    handleDrag(this.canvas);
+    handleScale(this.canvas);
+    handleClick(this.canvas, (event) => {
+      handlers.onFastMapClick?.(this, event);
+    });
+    handleDbClick(this.canvas, (event) => {
+      handlers.onFastMapDbClick?.(this, event);
+    });
+
+    this.canvas.on("mouse:over", (e) => {
+      antiShake(() => {
+        if (e.target?.type === "circle") {
+          const waypoint = this.getWayPoint(e.target);
+          if (waypoint) {
+            waypoint.hover(true);
+            this.hovering = waypoint.key;
+          }
+        }
+      }, 200)();
+    });
+
+    this.canvas.on("mouse:out", (e) => {
+      antiShake(() => {
+        if (this.hovering) {
+          const waypoint = this.getWayPoint(this.hovering);
+          if (waypoint) {
+            waypoint.hover(false);
+          }
+          this.hovering = undefined;
+        }
+      }, 200)();
+    });
   }
 }

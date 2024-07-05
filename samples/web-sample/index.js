@@ -1,4 +1,4 @@
-const HOST = "122.224.165.90:39014";
+const HOST = "localhost:3000";
 const HTTP_SEVER_HOST = `http://${HOST}`;
 const WS_SERVER_HOST = `ws://${HOST}/ws`;
 
@@ -17,7 +17,7 @@ const SCALE = 0.01;
  * 机器人分配任务的窗口，由画布点击事件触发
  */
 const taskAssignModal = (e) => {
-  const { waypointKey, cx = 0, cy = 0, fastMap } = e;
+  const { waypointKey, cx = 0, cy = 0, angle, fastMap } = e;
   const x = Number((cx / SCALE).toFixed(4));
   const y = Number((cy / SCALE).toFixed(4));
 
@@ -61,8 +61,8 @@ const taskAssignModal = (e) => {
   body.appendChild(
     document.createTextNode(
       waypointKey === 0 || waypointKey
-        ? `点位 ${waypointKey}，请选择机器人派遣任务，或中止已有任务`
-        : `坐标 (${x}, ${y})，请选择机器人派遣任务，或中止已有任务`
+        ? `点位 ${waypointKey}，朝向${angle}度，请选择机器人派遣任务，或中止已有任务`
+        : `坐标 (${x}, ${y})，朝向${angle}度，请选择机器人派遣任务，或中止已有任务`
     )
   );
   body.onclick = (e) => {
@@ -112,8 +112,8 @@ const taskAssignModal = (e) => {
           // 轻提示
           alert(
             waypointKey === 0 || waypointKey
-              ? `任务派遣成功，机器人${r.key}已经开始前往点位(id: ${waypointKey})`
-              : `任务派遣成功，机器人${r.key}已经开始前往坐标(${x}, ${y})`
+              ? `任务派遣成功，机器人${r.key}已经开始前往点位(id: ${waypointKey})，朝向${angle}度`
+              : `任务派遣成功，机器人${r.key}已经开始前往坐标(${x}, ${y})，朝向${angle}度`
           );
 
           const points = [...res.path, res.point];
@@ -194,10 +194,11 @@ async function init() {
       // 这里是FastMap扩展的配置项，可以配置不同的图形的样式
       fastMapConfig: {
         draw: {
+          initOffset: [-100, 300],
           Fence: ({ type }) => {
             return {
               zIndex: -100,
-              fill: type === "boundary" ? "#868e96" : "#f0f0f0",
+              fill: type === "boundary" ? "#a5d8ff" : "#f0f0f0",
             };
           },
           // 如有相同的参数定义，gait > speed > mode
@@ -222,7 +223,7 @@ async function init() {
                 : undefined;
 
             return {
-              radius: 2,
+              radius: 6,
               stroke: "black",
               fill: "black",
               strokeWidth: type === "return" ? 1 : 5,
@@ -234,15 +235,29 @@ async function init() {
           }),
         },
       },
-      onFastMapDoubleClick: (e) => {
-        const { cx, cy, fastMap } = e;
-        taskAssignModal({ cx, cy, fastMap });
-      },
-      onFastMapWaypointDoubleClick: (e) => {
-        taskAssignModal({ waypointKey: e.waypointKey, fastMap });
-      },
     }
   );
+  fastMap.initEventHandler({
+    onFastMapDbClick: (fastMap, e) => {
+      const o = fastMap.canvas.getActiveObject();
+      const waypoint = o?.type === "circle" ? fastMap.getWayPoint(o) : null;
+      const pointer = fastMap.canvas.getPointer(e.e);
+
+      const c = waypoint
+        ? waypoint.center
+        : new FastMap.Coordinates(pointer.x, pointer.y, 0);
+
+      fastMap.indicate(c, (e, data) => {
+        taskAssignModal({
+          cx: c.x,
+          cy: c.y,
+          fastMap,
+          waypointKey: waypoint?.key,
+          angle: data.angle,
+        });
+      });
+    },
+  });
 
   // 添加围栏
   for (const f of fences) {
@@ -321,14 +336,14 @@ init().then((fastMap) => {
   fastMap.addRobot(
     new FastMap.Robot({
       key: "test1",
-      center: new FastMap.Coordinates(10000, 2000, 0, SCALE),
+      center: new FastMap.Coordinates(10000, -2000, 0, SCALE),
       angle: 190,
     })
   );
   fastMap.addRobot(
     new FastMap.Robot({
       key: "test2",
-      center: new FastMap.Coordinates(15000, 3000, 0, SCALE),
+      center: new FastMap.Coordinates(20000, -3000, 0, SCALE),
       angle: 70,
     })
   );
@@ -336,7 +351,7 @@ init().then((fastMap) => {
   fastMap.addRobot(
     new FastMap.Robot({
       key: "R24060500001@RBDP00X20",
-      center: new FastMap.Coordinates(20000, 4000, 0, SCALE),
+      center: new FastMap.Coordinates(40000, -4000, 0, SCALE),
     })
   );
 
@@ -358,7 +373,7 @@ init().then((fastMap) => {
         })
       );
     } else {
-      fastMap.moveRobotTo(
+      fastMap.setRobotTo(
         data.peri_id,
         new FastMap.Coordinates(
           data.status.pos[0],
@@ -387,7 +402,10 @@ function genMapDataFetcher(tid) {
   async function getMapFences() {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/map/fence?tid=${tid}`);
     const data = await res.json();
-    return data.fence;
+    return data.fence.map((f) => ({
+      ...f,
+      points: f.points.map((p) => [p[0], -p[1]]),
+    }));
   }
 
   /**
@@ -399,7 +417,10 @@ function genMapDataFetcher(tid) {
     const res = await fetch(`${HTTP_SEVER_HOST}/patro/map/point?tid=${tid}`);
     const data = await res.json();
     // if (data.csq !== 1) return [];
-    return data.point;
+    return data.point.map((p) => ({
+      ...p,
+      pos: [p.pos[0], -p.pos[1], p.pos[2]],
+    }));
   }
 
   /**

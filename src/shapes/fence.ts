@@ -38,45 +38,44 @@ export class Fence {
 
   draw() {
     const shape = new fabric.Polygon(
-      this.polygon.map((c) => ({ x: c.x, y: -c.y })),
+      this.polygon.map((c) => ({ x: c.x, y: c.y })),
       {
-        fill: "rgba(0, 0, 0, 0.1)",
         evented: false,
         selectable: false,
+        fill: "rgba(255, 255, 255, 0.1)",
         hoverCursor: "default",
         ...this.fastMap?.config?.draw?.Fence({ type: this.type }),
       }
     );
-    shape.hasBorders = shape.hasControls = false;
 
     const dots = this.fastMap?.debug
       ? this.polygon.flatMap((c, index) => {
           const dot = new fabric.Circle({
+            evented: false,
             radius: 2,
             originX: "center",
             originY: "center",
             left: c.x,
-            top: -c.y,
+            top: c.y,
             fill: "red",
             selectable: false,
             hoverCursor: "default",
           });
-          dot.hasBorders = dot.hasControls = false;
 
           const text = new fabric.Text(
-            `${index}(${c.x.toFixed(4)},${-c.y.toFixed(4)})`,
+            `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
             {
+              evented: false,
               originX: "center",
               originY: "center",
               fontSize: 8,
               left: c.x,
-              top: -c.y + 12,
-              text: `${index}(${c.x.toFixed(4)},${-c.y.toFixed(4)})`,
+              top: c.y + 12,
+              text: `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
               hoverCursor: "default",
               selectable: false,
             }
           );
-          text.hasBorders = text.hasControls = false;
           return [dot, text];
         })
       : [];

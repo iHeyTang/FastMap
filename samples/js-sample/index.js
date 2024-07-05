@@ -104,7 +104,7 @@ setInterval(() => {
     if (!robot) return;
 
     // 移动机器人，这里接入了websocket后，就可以通过这个方法来实时更新机器人的位置
-    fastMap.moveRobotTo(
+    fastMap.setRobotTo(
       key,
       new FastMap.Coordinates(robot.center.x + x * 4, robot.center.y + y * 4, 0)
     );

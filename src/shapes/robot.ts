@@ -45,12 +45,13 @@ export class Robot {
 
   draw() {
     fabric.Image.fromURL(Avatar, (img) => {
-      console.log("🚀 ~ Robot ~ draw ~ img:", img);
       img.scale(0.5).set({
         scaleX: 0.05,
         scaleY: 0.05,
+        originX: "center",
+        originY: "center",
         left: this.center.x,
-        top: -this.center.y,
+        top: this.center.y,
         angle: this.angle,
       });
       img.lockScalingFlip = true;
@@ -60,19 +61,43 @@ export class Robot {
       this.fastMap?.canvas?.add(img);
     });
 
+    const rect = new fabric.Rect({
+      evented: false,
+      selectable: false,
+      originX: "center",
+      originY: "center",
+      left: this.center.x,
+      top: this.center.y,
+      width: 40,
+      height: 40,
+      fill: "#f59f00",
+      angle: this.angle,
+    });
+    const triangle = new fabric.Triangle({
+      width: 60,
+      height: 60,
+      evented: false,
+      fill: "#f59f00",
+      originX: "center",
+      originY: "bottom",
+      left: this.center.x,
+      top: this.center.y,
+      angle: this.angle,
+    });
+
     const text = new fabric.Text(this.key, {
       originX: "center",
       originY: "center",
       fontSize: 12,
       left: this.center.x,
-      top: -this.center.y + 12,
+      top: this.center.y,
       text: this.key,
       selectable: false,
       ...this.fastMap?.config?.draw?.Robot,
       ...this.dynamicTextOptions,
     });
 
-    this.shapes = [text];
+    this.shapes = [rect, triangle, text];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 

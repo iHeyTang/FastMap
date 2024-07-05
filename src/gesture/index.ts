@@ -1,8 +1,10 @@
+import FastMap from "../fast-map";
+
 /**
  * 实现地图拖拽功能
  * @param canvas
  */
-export const draggable = (canvas: fabric.Canvas) => {
+export const handleDrag = (canvas: fabric.Canvas) => {
   let isDragging = false;
   let lastX = 0;
   let lastY = 0;
@@ -41,7 +43,7 @@ export const draggable = (canvas: fabric.Canvas) => {
   });
 };
 
-export const clickable = (
+export const handleClick = (
   canvas: fabric.Canvas,
   handler: (e: fabric.IEvent<MouseEvent>) => void
 ) => {
@@ -61,14 +63,14 @@ export const clickable = (
   });
 };
 
-export const doubleClickable = (
+export const handleDbClick = (
   canvas: fabric.Canvas,
   handler: (e: fabric.IEvent<MouseEvent>) => void
 ) => {
   canvas.on("mouse:dblclick", handler);
 };
 
-export const scalable = (canvas: fabric.Canvas) => {
+export const handleScale = (canvas: fabric.Canvas) => {
   canvas.on("mouse:wheel", (event) => {
     const e = event.e as WheelEvent;
     const delta = e.deltaY;

@@ -42,21 +42,22 @@ export class WayPoint {
 
   draw() {
     const circle = new fabric.Circle({
+      hasBorders: false,
+      hasControls: false,
       radius: 5,
       originX: "center",
       originY: "center",
       left: this.center.x,
-      top: -this.center.y,
+      top: this.center.y,
       fill: undefined,
       strokeWidth: 1,
       hoverCursor: "pointer",
       ...this.fastMap?.config?.draw?.WayPoint({ type: this.type }),
       ...this.dynamicOptions,
       ...(this.hovering
-        ? { fill: "#099268", stroke: "#099268", radius: 8 }
+        ? { fill: "#099268", stroke: "#099268", radius: 20 }
         : {}),
     });
-    circle.hasControls = false;
     this.shapes = [circle];
     this.fastMap?.canvas?.add(...this.shapes);
   }
