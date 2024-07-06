@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
-import { genMapDataFetcher } from "./apis";
+import { FenceData, LineData, PointData, genMapDataFetcher } from "./apis";
 import {
   Coordinates,
   FastMap,
@@ -34,24 +34,40 @@ function App() {
     0, 0,
   ]);
 
+  const [mapData, setMapData] = useState<
+    | {
+        fences: FenceData[] | undefined;
+        lines: LineData[] | undefined;
+        points: PointData[] | undefined;
+      }
+    | undefined
+  >();
+
   const mapDataFetcher = useMemo(() => {
     return genMapDataFetcher("123");
   }, []);
 
-  const init = useCallback(async () => {
+  useEffect(() => {
+    Promise.all([
+      mapDataFetcher.getMapFences(),
+      mapDataFetcher.getMapLines(),
+      mapDataFetcher.getMapPoints(),
+    ]).then(([fences, lines, points]) => {
+      setMapData({ fences, lines, points });
+    });
+  }, [mapDataFetcher]);
+
+  const init = useCallback(() => {
+    if (!mapData) return;
     if (fastMapRef.current) {
       fastMapRef.current.canvas.dispose();
       // @ts-expect-error 无需关注
       fastMapRef.current = null;
     }
 
-    const [fences, lines, points] = await Promise.all([
-      mapDataFetcher.getMapFences(),
-      mapDataFetcher.getMapLines(),
-      mapDataFetcher.getMapPoints(),
-    ]);
     // 创建一个FastMap实例
-    const fastMap = new FastMap(
+    // @ts-expect-error 无需关注
+    fastMapRef.current = new FastMap(
       // 这里是一个canvas的id，通过html中 <canvas id="canvas"></canvas> 创建的canvas
       "canvas",
       // 这里是配置项，可参考fabric.Canvas#constructor的配置项
@@ -105,8 +121,7 @@ function App() {
       }
     );
     // 把FastMap实例保存到ref中
-    // @ts-expect-error 无需关注
-    fastMapRef.current = fastMap;
+    const fastMap = fastMapRef.current;
 
     fastMap.debug = debug;
 
@@ -126,7 +141,7 @@ function App() {
     });
 
     // 添加围栏
-    for (const f of fences) {
+    for (const f of mapData.fences || []) {
       const fence = new Fence({
         fastMap,
         // 这里的key是唯一标识，不可重复
@@ -140,7 +155,7 @@ function App() {
     }
 
     // 添加点位
-    for (const point of points) {
+    for (const point of mapData.points || []) {
       const waypoint = new WayPoint({
         fastMap,
         // 这里的key是唯一标识，不可重复
@@ -161,7 +176,7 @@ function App() {
     }
 
     // 添加路径
-    for (const line of lines) {
+    for (const line of mapData.lines || []) {
       const road = new Road({
         fastMap,
         // 这里的key是唯一标识，不可重复
@@ -230,7 +245,7 @@ function App() {
         );
       }
     });
-  }, [debug, mapDataFetcher]);
+  }, [debug, mapData, mapDataFetcher]);
 
   useEffect(() => {
     init();

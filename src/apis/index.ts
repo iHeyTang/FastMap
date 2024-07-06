@@ -4,18 +4,18 @@ const HOST = import.meta.env.VITE_SERVER_HOST || "localhost:3000";
 const HTTP_SEVER_HOST = `http://${HOST}`;
 const WS_SERVER_HOST = `ws://${HOST}/ws`;
 
-type Fence = { id: number; points: [number, number][]; type: 0 | 1 };
+export type FenceData = { id: number; points: number[][]; type: 0 | 1 };
 
-type Point = {
+export type PointData = {
   id: number;
   name: string;
-  pos: [number, number, number];
+  pos: number[];
   type: number;
 };
 
-type Line = {
+export type LineData = {
   id: number;
-  point: [number, number];
+  point: number[];
   direction: 1 | 0;
   speed: number;
   gait: number;
@@ -24,7 +24,7 @@ type Line = {
 
 export function genMapDataFetcher(tid: string) {
   async function getMapFences() {
-    const res = await axios<{ fence: Fence[] }>(
+    const res = await axios<{ fence: FenceData[] }>(
       `${HTTP_SEVER_HOST}/patro/map/fence?tid=${tid}`
     );
     // if (data.csq !== 1) return [];
@@ -35,7 +35,7 @@ export function genMapDataFetcher(tid: string) {
   }
 
   async function getMapPoints() {
-    const res = await axios<{ point: Point[] }>(
+    const res = await axios<{ point: PointData[] }>(
       `${HTTP_SEVER_HOST}/patro/map/point?tid=${tid}`
     );
     // if (data.csq !== 1) return [];
@@ -46,7 +46,7 @@ export function genMapDataFetcher(tid: string) {
   }
 
   async function getMapLines() {
-    const res = await axios<{ line: Line[] }>(
+    const res = await axios<{ line: LineData[] }>(
       `${HTTP_SEVER_HOST}/patro/map/line?tid=${tid}`
     );
     // if (data.csq !== 1) return [];
