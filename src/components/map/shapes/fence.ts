@@ -1,6 +1,6 @@
-import { fabric } from "fabric";
+import { Circle, FabricObject, FabricText, Polygon } from "fabric";
 import { Coordinates } from "./base";
-import FastMap from "../fast-map";
+import { FastMap } from "../fast-map";
 
 /**
  * 类型是边界或障碍物
@@ -11,11 +11,11 @@ export type FenceType = "boundary" | "obstacle";
  * 围栏
  */
 export class Fence {
-  key: string;
+  key: string | number;
 
   fastMap: FastMap | undefined;
 
-  shapes: fabric.Object[] = [];
+  shapes: FabricObject[] = [];
 
   /**
    * 一组坐标点，组成一个多边形
@@ -25,7 +25,7 @@ export class Fence {
   type: FenceType;
 
   constructor(props: {
-    key: string;
+    key: string | number;
     fastMap: FastMap;
     polygon: Coordinates[];
     type: FenceType;
@@ -37,7 +37,7 @@ export class Fence {
   }
 
   draw() {
-    const shape = new fabric.Polygon(
+    const shape = new Polygon(
       this.polygon.map((c) => ({ x: c.x, y: c.y })),
       {
         evented: false,
@@ -50,7 +50,7 @@ export class Fence {
 
     const dots = this.fastMap?.debug
       ? this.polygon.flatMap((c, index) => {
-          const dot = new fabric.Circle({
+          const dot = new Circle({
             evented: false,
             radius: 2,
             originX: "center",
@@ -62,7 +62,7 @@ export class Fence {
             hoverCursor: "default",
           });
 
-          const text = new fabric.Text(
+          const text = new FabricText(
             `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
             {
               evented: false,

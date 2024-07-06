@@ -1,4 +1,5 @@
-import FastMap from "../fast-map";
+import { CircleProps, FabricObjectProps, RectProps, TOptions } from "fabric";
+import { FastMap } from "../fast-map";
 
 export type RoadMode = "one-way" | "two-way";
 export type RoadSpeed = "1" | "2" | "3";
@@ -10,22 +11,22 @@ export type RoadGait = "flat" | "slope" | "stairs";
 export class Highlights {
   fastMap: FastMap | undefined;
 
-  robotKeys: string[] = [];
-  roadKeys: string[] = [];
-  waypointKeys: string[] = [];
+  robotKeys: (string | number)[] = [];
+  roadKeys: (string | number)[] = [];
+  waypointKeys: (string | number)[] = [];
 
-  roadOptions: fabric.ILineOptions = {};
-  waypointOptions: fabric.ICircleOptions = {};
-  robotRectOptions: fabric.IRectOptions = {};
+  roadOptions: TOptions<FabricObjectProps> = {};
+  waypointOptions: TOptions<CircleProps> = {};
+  robotRectOptions: TOptions<RectProps> = {};
 
   constructor(props: {
     fastMap: FastMap;
-    robotKeys?: string[];
-    roadKeys?: string[];
-    waypointKeys?: string[];
-    robotRectOptions?: fabric.IRectOptions;
-    roadOptions?: fabric.ILineOptions;
-    waypointOptions?: fabric.ICircleOptions;
+    robotKeys?: (string | number)[];
+    roadKeys?: (string | number)[];
+    waypointKeys?: (string | number)[];
+    robotRectOptions?: TOptions<RectProps>;
+    roadOptions?: TOptions<FabricObjectProps>;
+    waypointOptions?: TOptions<CircleProps>;
   }) {
     this.fastMap = props.fastMap;
 
@@ -65,10 +66,6 @@ export class Highlights {
       waypoint.setDynamicOptions(this.waypointOptions);
     }
 
-    for (const robot of this.matchedRobots || []) {
-      robot.setDynamicRectOptions(this.robotRectOptions);
-    }
-
     this.fastMap?.canvas?.requestRenderAll();
   }
 
@@ -79,10 +76,6 @@ export class Highlights {
 
     for (const waypoint of this.matchedWayPoints || []) {
       waypoint.setDynamicOptions({});
-    }
-
-    for (const robot of this.matchedRobots || []) {
-      robot.setDynamicRectOptions({});
     }
 
     this.fastMap?.canvas?.requestRenderAll();

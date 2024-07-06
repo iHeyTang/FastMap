@@ -1,6 +1,6 @@
-import { fabric } from "fabric";
+import { FastMap } from "../fast-map";
 import { Coordinates } from "./base";
-import FastMap from "../fast-map";
+import { Circle, CircleProps, FabricObject, TOptions } from "fabric";
 
 export type WayPointType = "charge" | "chargePrepare" | "return" | "task";
 
@@ -10,9 +10,9 @@ export type WayPointType = "charge" | "chargePrepare" | "return" | "task";
 export class WayPoint {
   fastMap: FastMap | undefined;
 
-  shapes: fabric.Object[] = [];
+  shapes: FabricObject[] = [];
 
-  key: string;
+  key: string | number;
 
   hovering?: boolean;
 
@@ -26,11 +26,11 @@ export class WayPoint {
 
   readonly center: Coordinates;
 
-  private dynamicOptions: fabric.ILineOptions = {};
+  private dynamicOptions: TOptions<CircleProps> = {};
 
   constructor(props: {
     fastMap: FastMap;
-    key: string;
+    key: string | number;
     type: WayPointType;
     center: Coordinates;
   }) {
@@ -41,7 +41,7 @@ export class WayPoint {
   }
 
   draw() {
-    const circle = new fabric.Circle({
+    const circle = new Circle({
       hasBorders: false,
       hasControls: false,
       radius: 5,
@@ -62,7 +62,7 @@ export class WayPoint {
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
-  setDynamicOptions(options: fabric.ILineOptions) {
+  setDynamicOptions(options: TOptions<CircleProps>) {
     this.dynamicOptions = options;
     if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
     this.draw();

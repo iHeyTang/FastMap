@@ -1,6 +1,12 @@
-import { fabric } from "fabric";
+import {
+  FabricObject,
+  FabricObjectProps,
+  FabricText,
+  Line,
+  TOptions,
+} from "fabric";
 import { Coordinates } from "./base";
-import FastMap from "../fast-map";
+import { FastMap } from "../fast-map";
 
 export type RoadMode = "one-way" | "two-way";
 export type RoadSpeed = number;
@@ -12,9 +18,9 @@ export type RoadGait = "flat" | "slope" | "stairs";
 export class Road {
   fastMap: FastMap | undefined;
 
-  shapes: fabric.Object[] = [];
+  shapes: FabricObject[] = [];
 
-  key: string;
+  key: string | number;
 
   /**
    * 通行模式
@@ -37,29 +43,32 @@ export class Road {
    */
   readonly gait: RoadGait;
 
+  readonly radar: string | number;
+
   /**
    * 起点
    */
-  readonly begin: Coordinates | string;
+  readonly begin: Coordinates | string | number;
 
   /**
    * 终点
    */
-  readonly end: Coordinates | string;
+  readonly end: Coordinates | string | number;
 
   /**
    * 动态参数，用于动态调整路径样式，如路径颜色、宽度等
    */
-  private dynamicOptions: fabric.ILineOptions = {};
+  private dynamicOptions: TOptions<FabricObjectProps> = {};
 
   constructor(props: {
     fastMap: FastMap;
-    key: string;
+    key: string | number;
     mode: RoadMode;
     speed: RoadSpeed;
     gait: RoadGait;
-    begin: Coordinates | string;
-    end: Coordinates | string;
+    begin: Coordinates | string | number;
+    end: Coordinates | string | number;
+    radar: string | number;
   }) {
     this.fastMap = props.fastMap;
     this.key = props.key;
@@ -68,6 +77,7 @@ export class Road {
     this.gait = props.gait;
     this.begin = props.begin;
     this.end = props.end;
+    this.radar = props.radar;
   }
 
   get beginCoordinates() {
@@ -98,7 +108,7 @@ export class Road {
     const [begin, end] = [this.beginCoordinates, this.endCoordinates];
     if (!begin || !end) return;
 
-    const line = new fabric.Line([begin.x, begin.y, end.x, end.y], {
+    const line = new Line([begin.x, begin.y, end.x, end.y], {
       evented: false,
       selectable: false,
       hasControls: false,
@@ -116,7 +126,7 @@ export class Road {
 
     const title = this.fastMap?.debug
       ? [
-          new fabric.Text(`${this.key}`, {
+          new FabricText(`${this.key}`, {
             evented: false,
             hasBorders: false,
             hasControls: false,
@@ -134,7 +144,7 @@ export class Road {
 
     const dots = this.fastMap?.debug
       ? [begin, end].map((c) => {
-          const text = new fabric.Text(
+          const text = new FabricText(
             `(${c?.x.toFixed(4)},${c.y.toFixed(4)})`,
             {
               evented: false,
@@ -158,7 +168,7 @@ export class Road {
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
-  setDynamicOptions(options: fabric.ILineOptions) {
+  setDynamicOptions(options: TOptions<FabricObjectProps>) {
     this.dynamicOptions = options;
     if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
     this.draw();

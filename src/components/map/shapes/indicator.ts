@@ -1,7 +1,20 @@
-import { fabric } from "fabric";
+import {
+  FabricText,
+  FabricObject,
+  Circle,
+  Triangle,
+  TPointerEvent,
+  TPointerEventInfo,
+} from "fabric";
 import { Coordinates } from "./base";
-import FastMap from "../fast-map";
-import { antiShake } from "../utils";
+import { FastMap } from "../fast-map";
+
+export type IndicatorResult = {
+  x: number;
+  y: number;
+  angle: number;
+  waypointKey?: string | number;
+};
 
 /**
  * 点位
@@ -9,7 +22,7 @@ import { antiShake } from "../utils";
 export class Indicator {
   fastMap: FastMap | undefined;
 
-  shapes: fabric.Object[] = [];
+  shapes: FabricObject[] = [];
 
   hovering?: boolean;
 
@@ -17,12 +30,18 @@ export class Indicator {
 
   readonly center: Coordinates;
 
-  onIndicate: (e: fabric.IEvent<MouseEvent>, data: { angle: number }) => void;
+  onIndicate: (
+    data: IndicatorResult,
+    originEvent: TPointerEventInfo<TPointerEvent>
+  ) => void;
 
   constructor(props: {
     fastMap: FastMap;
     center: Coordinates;
-    onIndicate: (e: fabric.IEvent<MouseEvent>, data: { angle: number }) => void;
+    onIndicate: (
+      data: IndicatorResult,
+      originEvent: TPointerEventInfo<TPointerEvent>
+    ) => void;
   }) {
     this.angle = 0;
     this.fastMap = props.fastMap;
@@ -35,7 +54,7 @@ export class Indicator {
   }
 
   draw() {
-    const circle = new fabric.Circle({
+    const circle = new Circle({
       radius: 30,
       evented: false,
       hasControls: false,
@@ -48,7 +67,7 @@ export class Indicator {
       strokeWidth: 1,
       hoverCursor: "pointer",
     });
-    const text = new fabric.Text(`${this.angle}`, {
+    const text = new FabricText(`${this.angle}`, {
       evented: false,
       originX: "center",
       originY: "center",
@@ -59,7 +78,7 @@ export class Indicator {
       fill: "#fff",
     });
     // 在this.center处画扇形，角度为this.angle，画个三角表示方向
-    const triangle = new fabric.Triangle({
+    const triangle = new Triangle({
       width: 60,
       height: 45,
       evented: false,
@@ -75,10 +94,10 @@ export class Indicator {
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
-  onMouseMove(event: fabric.IEvent) {
+  onMouseMove(event: TPointerEventInfo<TPointerEvent>) {
     if (!this.fastMap?.canvas) return;
 
-    const pointer = this.fastMap.canvas.getPointer(event.e);
+    const pointer = this.fastMap.canvas.getScenePoint(event.e);
     // 计算角度
     const angle = Math.atan2(
       pointer.y - this.center.y,
@@ -91,11 +110,26 @@ export class Indicator {
     this.draw();
   }
 
-  onMouseUp(event: fabric.IEvent) {
+  onMouseUp(event: TPointerEventInfo<TPointerEvent>) {
     if (!this.fastMap?.canvas) return;
     this.fastMap.canvas.remove(...this.shapes);
     this.shapes = [];
-    this.onIndicate(event as fabric.IEvent<MouseEvent>, { angle: this.angle });
+
+    const activeObject = this.fastMap.canvas.getActiveObject();
+    const waypoint =
+      activeObject?.type === "circle"
+        ? this.fastMap.getWayPoint(activeObject)
+        : null;
+
+    this.onIndicate(
+      {
+        angle: this.angle,
+        x: this.center.x,
+        y: this.center.y,
+        waypointKey: waypoint?.key,
+      },
+      event
+    );
     this.fastMap.canvas.off("mouse:move", this.onMouseMove);
     this.fastMap.canvas.off("mouse:up", this.onMouseUp);
   }

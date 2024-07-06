@@ -1,5 +1,16 @@
-import { fabric } from "fabric";
-import { handleClick, handleDbClick, handleDrag, handleScale } from "./gesture";
+import {
+  Canvas,
+  CanvasOptions,
+  Circle,
+  CircleProps,
+  FabricObject,
+  FabricObjectProps,
+  Point,
+  RectProps,
+  TOptions,
+  TPointerEvent,
+  TPointerEventInfo,
+} from "fabric";
 import {
   Coordinates,
   Fence,
@@ -24,18 +35,20 @@ export type FastMapConfig = {
       mode: RoadMode;
       speed: RoadSpeed;
       gait: RoadGait;
-    }) => fabric.ILineOptions;
-    WayPoint: (props: { type: WayPointType }) => fabric.ILineOptions;
-    Robot: () => fabric.IRectOptions;
-    Fence: (props: { type: FenceType }) => fabric.ILineOptions;
+    }) => TOptions<FabricObjectProps>;
+    WayPoint: (props: { type: WayPointType }) => TOptions<CircleProps>;
+    Robot: () => TOptions<RectProps>;
+    Fence: (props: { type: FenceType }) => TOptions<FabricObjectProps>;
   };
 };
 
-export default class FastMap {
-  canvas: fabric.Canvas;
+export class FastMap {
+  canvas: Canvas;
   config: FastMapConfig;
 
   debug?: boolean;
+
+  mode: "assign" | "default" = "default";
 
   shapes: {
     indicator: Indicator | null;
@@ -47,11 +60,13 @@ export default class FastMap {
 
   highlights?: Highlights;
 
-  hovering?: string;
+  hovering?: string | number;
+
+  onIndicate?: Indicator["onIndicate"];
 
   constructor(
-    element: HTMLCanvasElement | string | null,
-    options: fabric.ICanvasOptions & {
+    element: HTMLCanvasElement | string,
+    options: TOptions<CanvasOptions> & {
       fastMapConfig: FastMapConfig;
     }
   ) {
@@ -63,7 +78,7 @@ export default class FastMap {
       indicator: null,
     };
     const { fastMapConfig, ...canvasOptions } = options;
-    this.canvas = new fabric.Canvas(element, {
+    this.canvas = new Canvas(element, {
       ...canvasOptions,
     });
     this.config = fastMapConfig;
@@ -132,8 +147,9 @@ export default class FastMap {
    * 地图视图初始化
    */
   initiate() {
+    this.initEventHandler();
     this.canvas.add(
-      new fabric.Circle({
+      new Circle({
         evented: false,
         radius: 1,
         originX: "center",
@@ -181,23 +197,15 @@ export default class FastMap {
     this.highlights = undefined;
   }
 
-  indicate(
-    coordinates: Coordinates,
-    onIndicate: (e: fabric.IEvent, data: { angle: number }) => void
-  ) {
-    this.shapes.indicator = new Indicator({
-      fastMap: this,
-      center: coordinates,
-      onIndicate: onIndicate,
-    });
-    this.shapes.indicator.draw();
+  handleIndicate(onIndicate: Indicator["onIndicate"]) {
+    this.onIndicate = onIndicate;
   }
 
   getRoad(key: string) {
     return this.shapes.roads.find((r) => r.key === key);
   }
 
-  getWayPoint(key: string | fabric.Object) {
+  getWayPoint(key: string | number | FabricObject) {
     if (typeof key === "object" && key.type === "circle") {
       return this.shapes.waypoints.find((w) => w.shapes.includes(key));
     }
@@ -253,19 +261,13 @@ export default class FastMap {
     return new Coordinates((x1 + x2) / 2, (y1 + y2) / 2, (z1 + z2) / 2);
   }
 
-  initEventHandler(handlers: {
-    onFastMapClick?: (fastMap: FastMap, e: fabric.IEvent<MouseEvent>) => void;
-    onFastMapDbClick?: (fastMap: FastMap, e: fabric.IEvent<MouseEvent>) => void;
-  }) {
-    handleDrag(this.canvas);
-    handleScale(this.canvas);
-    handleClick(this.canvas, (event) => {
-      handlers.onFastMapClick?.(this, event);
-    });
-    handleDbClick(this.canvas, (event) => {
-      handlers.onFastMapDbClick?.(this, event);
-    });
+  initEventHandler() {
+    this.handleDrag();
+    this.handleScale();
+    this.handleWaypointOver();
+  }
 
+  handleWaypointOver() {
     this.canvas.on("mouse:over", (e) => {
       antiShake(() => {
         if (e.target?.type === "circle") {
@@ -275,10 +277,10 @@ export default class FastMap {
             this.hovering = waypoint.key;
           }
         }
-      }, 200)();
+      }, 100)();
     });
 
-    this.canvas.on("mouse:out", (e) => {
+    this.canvas.on("mouse:out", () => {
       antiShake(() => {
         if (this.hovering) {
           const waypoint = this.getWayPoint(this.hovering);
@@ -287,7 +289,111 @@ export default class FastMap {
           }
           this.hovering = undefined;
         }
-      }, 200)();
+      }, 100)();
+    });
+  }
+
+  handleDrag() {
+    let isDragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    this.canvas.on("mouse:move", (event) => {
+      if (this.mode === "default") {
+        if (isDragging) {
+          const currentX = event.viewportPoint.x;
+          const currentY = event.viewportPoint.y;
+
+          const deltaX = currentX - lastX;
+          const deltaY = currentY - lastY;
+
+          const viewportTransform = this.canvas.viewportTransform;
+          if (typeof viewportTransform[4] === "number") {
+            viewportTransform[4] += deltaX;
+          }
+          if (typeof viewportTransform[5] === "number") {
+            viewportTransform[5] += deltaY;
+          }
+          this.canvas.setViewportTransform(viewportTransform);
+
+          lastX = currentX;
+          lastY = currentY;
+        }
+      }
+      if (this.mode === "assign") {
+        console.log("assign");
+      }
+    });
+
+    this.canvas.on("mouse:down", (event) => {
+      if (this.mode === "default") {
+        isDragging = true;
+        lastX = event.viewportPoint.x;
+        lastY = event.viewportPoint.y;
+      }
+      if (this.mode === "assign") {
+        const point = this.canvas.getScenePoint(event.e);
+        this.shapes.indicator = new Indicator({
+          fastMap: this,
+          center: new Coordinates(point.x, point.y, 0),
+          onIndicate: this.onIndicate || (() => {}),
+        });
+        this.shapes.indicator.draw();
+      }
+    });
+
+    this.canvas.on("mouse:up", () => {
+      if (this.mode === "default") {
+        isDragging = false;
+      }
+      if (this.mode === "assign") {
+        this.mode = "default";
+      }
+    });
+  }
+
+  handleClick(
+    canvas: Canvas,
+    handler: (e: TPointerEventInfo<TPointerEvent>) => void
+  ) {
+    let lastX = 0;
+    let lastY = 0;
+
+    canvas.on("mouse:down", (event) => {
+      lastX = event.scenePoint.x;
+      lastY = event.scenePoint.y;
+    });
+
+    canvas.on("mouse:up", (event) => {
+      if (event.scenePoint.x === lastX && event.scenePoint.y === lastY) {
+        handler(event);
+      }
+    });
+  }
+
+  handleDbClick(
+    canvas: Canvas,
+    handler: (e: TPointerEventInfo<TPointerEvent>) => void
+  ) {
+    canvas.on("mouse:dblclick", handler);
+  }
+
+  handleScale() {
+    this.canvas.on("mouse:wheel", (event) => {
+      const e = event.e as WheelEvent;
+      const delta = e.deltaY;
+      let zoom = this.canvas.getZoom();
+      zoom = zoom + delta / 2000;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      this.canvas.zoomToPoint(new Point(e.offsetX, e.offsetY), zoom);
+      e.preventDefault();
+      e.stopPropagation();
+    });
+  }
+
+  handleMove(handler: (e: TPointerEventInfo<TPointerEvent>) => void) {
+    this.canvas.on("mouse:move", (e) => {
+      handler(e);
     });
   }
 }
