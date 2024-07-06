@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const HOST = "localhost:3000";
+const HOST = import.meta.env.VITE_SERVER_HOST || "localhost:3000";
 const HTTP_SEVER_HOST = `http://${HOST}`;
 const WS_SERVER_HOST = `ws://${HOST}/ws`;
 
