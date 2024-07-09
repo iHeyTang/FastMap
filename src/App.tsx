@@ -14,7 +14,7 @@ import {
   TaskAssignModalRef,
 } from "./components/TaskAssignModal";
 import { StatusBar } from "./components/StatusBar";
-import { Button, message } from "antd";
+import { message } from "antd";
 import {
   TaskCancelModal,
   TaskCancelModalRef,
@@ -32,7 +32,7 @@ function App() {
     { id: string; pos: number[]; angle: number } | undefined
   >();
 
-  const [debug, setDebug] = useState(false);
+  const [debug, setDebug] = useState<boolean>();
   const [cursorPosition, setCursorPosition] = useState<[number, number]>([
     0, 0,
   ]);
