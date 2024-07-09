@@ -1,13 +1,5 @@
 import axios from "axios";
 
-const VITE_HTTP_SERVER_HOST =
-  import.meta.env.VITE_HTTP_SERVER_HOST || "localhost:3000";
-const HTTP_SEVER_HOST = `http://${VITE_HTTP_SERVER_HOST}`;
-
-const VITE_WS_SERVER_HOST =
-  import.meta.env.VITE_WS_SERVER_HOST || "localhost:3000";
-const WS_SERVER_HOST = `ws://${VITE_WS_SERVER_HOST}/ws`;
-
 export type FenceData = { id: number; points: number[][]; type: 0 | 1 };
 
 export type PointData = {
@@ -29,7 +21,7 @@ export type LineData = {
 export function genMapDataFetcher(tid: string) {
   async function getMapFences() {
     const res = await axios<{ fence: FenceData[] }>(
-      `${HTTP_SEVER_HOST}/patro/map/fence?tid=${tid}`
+      `/patro/map/fence?tid=${tid}`
     );
     // if (data.csq !== 1) return [];
     return res.data.fence.map((f) => ({
@@ -40,7 +32,7 @@ export function genMapDataFetcher(tid: string) {
 
   async function getMapPoints() {
     const res = await axios<{ point: PointData[] }>(
-      `${HTTP_SEVER_HOST}/patro/map/point?tid=${tid}`
+      `/patro/map/point?tid=${tid}`
     );
     // if (data.csq !== 1) return [];
     return res.data.point.map((p) => ({
@@ -50,9 +42,7 @@ export function genMapDataFetcher(tid: string) {
   }
 
   async function getMapLines() {
-    const res = await axios<{ line: LineData[] }>(
-      `${HTTP_SEVER_HOST}/patro/map/line?tid=${tid}`
-    );
+    const res = await axios<{ line: LineData[] }>(`/patro/map/line?tid=${tid}`);
     // if (data.csq !== 1) return [];
     return res.data.line;
   }
@@ -68,7 +58,7 @@ export function genMapDataFetcher(tid: string) {
         peri_id: string;
         point: number;
         path: (number | number[])[];
-      }>(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
+      }>("/patro/navigation/plan", {
         method: "POST",
         data: {
           tid,
@@ -96,7 +86,7 @@ export function genMapDataFetcher(tid: string) {
         peri_id: string;
         point: number;
         path: number[];
-      }>(`${HTTP_SEVER_HOST}/patro/navigation/stop`, {
+      }>("/patro/navigation/stop", {
         method: "POST",
         data: { tid, peri_id: peri_id },
       });
@@ -107,7 +97,9 @@ export function genMapDataFetcher(tid: string) {
   }
 
   function createRobotStatusSocket() {
-    const robotStatusSocket = new WebSocket(`${WS_SERVER_HOST}`);
+    const robotStatusSocket = new WebSocket(
+      `ws://${window.location.hostname}/ws`
+    );
     robotStatusSocket.onopen = () => {
       console.log("ws opened");
     };
