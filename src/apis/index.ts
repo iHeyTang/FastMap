@@ -1,8 +1,12 @@
 import axios from "axios";
 
-const HOST = import.meta.env.VITE_SERVER_HOST || "localhost:3000";
-const HTTP_SEVER_HOST = `http://${HOST}`;
-const WS_SERVER_HOST = `ws://${HOST}/ws`;
+const VITE_HTTP_SERVER_HOST =
+  import.meta.env.VITE_HTTP_SERVER_HOST || "localhost:3000";
+const HTTP_SEVER_HOST = `http://${VITE_HTTP_SERVER_HOST}`;
+
+const VITE_WS_SERVER_HOST =
+  import.meta.env.VITE_WS_SERVER_HOST || "localhost:3000";
+const WS_SERVER_HOST = `ws://${VITE_WS_SERVER_HOST}/ws`;
 
 export type FenceData = { id: number; points: number[][]; type: 0 | 1 };
 
@@ -55,7 +59,8 @@ export function genMapDataFetcher(tid: string) {
 
   async function navigationPlan(
     peri_id: string,
-    point: string | number | number[]
+    point: string | number | number[],
+    yaw: number
   ) {
     try {
       const res = await axios<{
@@ -65,7 +70,7 @@ export function genMapDataFetcher(tid: string) {
         path: (number | number[])[];
       }>(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
         method: "POST",
-        data: { tid, peri_id: peri_id, point },
+        data: { tid, peri_id: peri_id, point, yaw: yaw },
       });
       return {
         code: res.data.code,

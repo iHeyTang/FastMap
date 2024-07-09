@@ -12,4 +12,12 @@ export default defineConfig({
       enable: false, // 开发环境是否启用 mock 功能
     }),
   ],
+  server: {
+    proxy: {
+      "/patro": {
+        target: "http://122.224.165.90:39014",
+        changeOrigin: true,
+      },
+    },
+  },
 });

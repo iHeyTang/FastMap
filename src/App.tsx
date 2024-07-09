@@ -330,11 +330,13 @@ function App() {
         onOk={async (e) => {
           if (!fastMapRef.current) return;
           fastMapRef.current.canvas.defaultCursor = "default";
+
           const res = await mapDataFetcher.navigationPlan(
             e.fastMap.shapes.robots[0].key,
             !e.waypointKey && e.waypointKey !== 0
-              ? [e.x, e.y, 0]
-              : e.waypointKey
+              ? [Math.round(e.x), Math.round(e.y), 0]
+              : e.waypointKey,
+            Number(((e.angle / 180) * Math.PI).toFixed(2))
           );
           if (res.code === 0) {
             message.success("下发成功");
