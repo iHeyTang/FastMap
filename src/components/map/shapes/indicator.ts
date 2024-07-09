@@ -20,7 +20,7 @@ export type IndicatorResult = {
  * 点位
  */
 export class Indicator {
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -61,8 +61,8 @@ export class Indicator {
       hasBorders: false,
       originX: "center",
       originY: "center",
-      left: this.center.x,
-      top: this.center.y,
+      left: this.center.x * this.fastMap.config.scale.x,
+      top: this.center.y * this.fastMap.config.scale.y,
       fill: "#1890ff",
       strokeWidth: 1,
       hoverCursor: "pointer",
@@ -73,8 +73,8 @@ export class Indicator {
       originY: "center",
       fontSize: 16,
       text: `${this.angle}`,
-      left: this.center.x,
-      top: this.center.y,
+      left: this.center.x * this.fastMap.config.scale.x,
+      top: this.center.y * this.fastMap.config.scale.y,
       fill: "#fff",
     });
     // 在this.center处画扇形，角度为this.angle，画个三角表示方向

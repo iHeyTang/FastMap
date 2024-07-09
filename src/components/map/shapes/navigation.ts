@@ -6,7 +6,7 @@ import { FastMap } from "../fast-map";
  * 路径
  */
 export class Navigation {
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -52,8 +52,8 @@ export class Navigation {
         evented: false,
         hasControls: false,
         fill: "red",
-        left: p.x,
-        top: p.y,
+        left: p.x * this.fastMap.config.scale.x,
+        top: p.y * this.fastMap.config.scale.y,
         originX: "center",
         originY: "center",
         selectable: false,
@@ -62,7 +62,12 @@ export class Navigation {
       // 路径，线段，当前点到下一个点
       if (index < points.length - 1) {
         const line = new Line(
-          [p.x, p.y, points[index + 1]!.x, points[index + 1]!.y],
+          [
+            p.x,
+            p.y,
+            points[index + 1]!.x * this.fastMap.config.scale.x,
+            points[index + 1]!.y * this.fastMap.config.scale.y,
+          ],
           {
             evented: false,
             selectable: false,

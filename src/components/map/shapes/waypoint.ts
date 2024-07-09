@@ -8,7 +8,7 @@ export type WayPointType = "charge" | "chargePrepare" | "return" | "task";
  * 点位
  */
 export class WayPoint {
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -47,8 +47,8 @@ export class WayPoint {
       radius: 5,
       originX: "center",
       originY: "center",
-      left: this.center.x,
-      top: this.center.y,
+      left: this.center.x * this.fastMap.config.scale.x,
+      top: this.center.y * this.fastMap.config.scale.y,
       fill: undefined,
       strokeWidth: 1,
       hoverCursor: "pointer",

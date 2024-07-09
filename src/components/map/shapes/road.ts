@@ -16,7 +16,7 @@ export type RoadGait = "flat" | "slope" | "stairs";
  * 路径
  */
 export class Road {
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -108,21 +108,29 @@ export class Road {
     const [begin, end] = [this.beginCoordinates, this.endCoordinates];
     if (!begin || !end) return;
 
-    const line = new Line([begin.x, begin.y, end.x, end.y], {
-      evented: false,
-      selectable: false,
-      hasControls: false,
-      hasBorders: false,
-      hoverCursor: "default",
-      originX: "center",
-      originY: "center",
-      ...this.fastMap?.config?.draw?.Road({
-        mode: this.mode,
-        speed: this.speed,
-        gait: this.gait,
-      }),
-      ...this.dynamicOptions,
-    });
+    const line = new Line(
+      [
+        begin.x * this.fastMap.config.scale.x,
+        begin.y * this.fastMap.config.scale.y,
+        end.x * this.fastMap.config.scale.x,
+        end.y * this.fastMap.config.scale.y,
+      ],
+      {
+        evented: false,
+        selectable: false,
+        hasControls: false,
+        hasBorders: false,
+        hoverCursor: "default",
+        originX: "center",
+        originY: "center",
+        ...this.fastMap?.config?.draw?.Road({
+          mode: this.mode,
+          speed: this.speed,
+          gait: this.gait,
+        }),
+        ...this.dynamicOptions,
+      }
+    );
 
     const title = this.fastMap?.debug
       ? [
@@ -133,8 +141,8 @@ export class Road {
             originX: "center",
             originY: "center",
             fontSize: 12,
-            left: (begin.x + end.x) / 2,
-            top: (begin.y + end.y) / 2,
+            left: ((begin.x + end.x) / 2) * this.fastMap.config.scale.x,
+            top: ((begin.y + end.y) / 2) * this.fastMap.config.scale.y,
             text: `${this.key}`,
             hoverCursor: "default",
             selectable: false,

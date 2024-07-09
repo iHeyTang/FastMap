@@ -6,10 +6,10 @@ export class Coordinates {
   readonly y: number;
   readonly z: number;
 
-  constructor(x: number, y: number, z: number, scale = 1) {
-    this.x = x * scale;
-    this.y = y * scale;
-    this.z = z * scale;
+  constructor(x: number, y: number, z: number) {
+    this.x = x;
+    this.y = y;
+    this.z = z;
   }
 
   toArr() {

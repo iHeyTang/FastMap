@@ -76,8 +76,9 @@ function App() {
         backgroundColor: "#f0f0f0",
         // 这里是FastMap扩展的配置项，可以配置不同的图形的样式
         fastMapConfig: {
+          scale: { x: SCALE, y: SCALE },
           draw: {
-            initOffset: [-100, 300],
+            initOffset: [1200, 50],
             Fence: ({ type }) => {
               return {
                 zIndex: -100,
@@ -126,7 +127,7 @@ function App() {
     fastMap.debug = debug;
 
     fastMap.handleMove((e) => {
-      const pointer = fastMap.canvas.getScenePoint(e.e);
+      const pointer = fastMap.getCoordinates(e);
       setCursorPosition([pointer.x, pointer.y]);
     });
 
@@ -147,7 +148,7 @@ function App() {
         // 这里的key是唯一标识，不可重复
         key: f.id,
         // 这里的points是围栏的点位，是一个FastMap.Coordinates实例数组
-        polygon: f.points.map((p) => new Coordinates(p[0], p[1], 0, SCALE)),
+        polygon: f.points.map((p) => new Coordinates(p[0], p[1], 0)),
         // 这里的type是围栏的类型，是一个字符串，可选值有"boundary"、"obstacle"，表示边界和障碍物
         type: f.type === 0 ? "boundary" : "obstacle",
       });
@@ -161,7 +162,7 @@ function App() {
         // 这里的key是唯一标识，不可重复
         key: point.id,
         // 这里的center是点位的中心点，是一个FastMap.Coordinates实例
-        center: new Coordinates(point.pos[0], point.pos[1], 0, SCALE),
+        center: new Coordinates(point.pos[0], point.pos[1], 0),
         // 这里的type是点位的类型，是一个字符串，可选值有"charge"、"task"、"return"，表示充电点、任务点、掉头点
         type:
           point.type === 3
@@ -202,10 +203,6 @@ function App() {
 
     // 地图初始化
     fastMap.initiate();
-    fastMap.canvas.zoomToPoint(
-      new Point({ x: fastMap.getMapCenter().x, y: fastMap.getMapCenter().y }),
-      0.7
-    );
 
     const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
     // 监听机器人状态信息
@@ -224,8 +221,7 @@ function App() {
             center: new Coordinates(
               data.status.pos[0],
               data.status.pos[1],
-              data.status.pos[2] || 0,
-              SCALE
+              data.status.pos[2] || 0
             ),
             angle: data.status.yaw * (180 / Math.PI),
           })
@@ -236,8 +232,7 @@ function App() {
           new Coordinates(
             data.status.pos[0],
             data.status.pos[1],
-            data.status.pos[2],
-            SCALE
+            data.status.pos[2]
           ),
           data.status.yaw * (180 / Math.PI)
         );
@@ -343,7 +338,7 @@ function App() {
           const res = await mapDataFetcher.navigationPlan(
             e.fastMap.shapes.robots[0].key,
             !e.waypointKey && e.waypointKey !== 0
-              ? [e.x / SCALE, -e.y / SCALE, 0]
+              ? [e.x, e.y, 0]
               : e.waypointKey
           );
           if (res.code === 0) {
@@ -353,7 +348,7 @@ function App() {
               1,
               res.path.map((r) => {
                 if (Array.isArray(r)) {
-                  return [r[0] * SCALE, -r[1] * SCALE, 0];
+                  return [r[0], r[1], 0];
                 }
                 return r;
               })

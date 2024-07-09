@@ -13,7 +13,7 @@ export type FenceType = "boundary" | "obstacle";
 export class Fence {
   key: string | number;
 
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -38,7 +38,10 @@ export class Fence {
 
   draw() {
     const shape = new Polygon(
-      this.polygon.map((c) => ({ x: c.x, y: c.y })),
+      this.polygon.map((c) => ({
+        x: c.x * this.fastMap.config.scale.x,
+        y: c.y * this.fastMap.config.scale.y,
+      })),
       {
         evented: false,
         selectable: false,
@@ -55,8 +58,8 @@ export class Fence {
             radius: 2,
             originX: "center",
             originY: "center",
-            left: c.x,
-            top: c.y,
+            left: c.x * this.fastMap.config.scale.x,
+            top: c.y * this.fastMap.config.scale.y,
             fill: "red",
             selectable: false,
             hoverCursor: "default",
@@ -69,8 +72,8 @@ export class Fence {
               originX: "center",
               originY: "center",
               fontSize: 8,
-              left: c.x,
-              top: c.y + 12,
+              left: c.x * this.fastMap.config.scale.x,
+              top: c.y * this.fastMap.config.scale.y + 12,
               text: `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
               hoverCursor: "default",
               selectable: false,

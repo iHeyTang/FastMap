@@ -29,6 +29,7 @@ import { Indicator } from "./shapes/indicator";
 import { antiShake } from "./utils";
 
 export type FastMapConfig = {
+  scale: { x: number; y: number };
   draw: {
     // 初始化取中心时感觉会有点偏移，原因暂时不明，这里加了一个偏移量
     initOffset: [number, number];
@@ -45,6 +46,7 @@ export type FastMapConfig = {
 
 export class FastMap {
   canvas: Canvas;
+
   config: FastMapConfig;
 
   debug?: boolean;
@@ -166,12 +168,24 @@ export class FastMap {
     );
 
     const center = this.getMapCenter();
+    console.log("🚀 ~ FastMap ~ initiate ~ center:", center);
+
     const viewportTransform = this.canvas.viewportTransform || [];
-    viewportTransform[4] =
-      -center.x + this.canvas.getCenter().left + this.config.draw.initOffset[0];
-    viewportTransform[5] =
-      -center.y + this.canvas.getCenter().top + this.config.draw.initOffset[1];
-    this.canvas.setViewportTransform(viewportTransform);
+    viewportTransform[4] = this.canvas.height - this.config.draw.initOffset[0];
+    viewportTransform[5] = this.canvas.height - this.config.draw.initOffset[1];
+    console.log(
+      "center.x * this.config.scale.x",
+      center.x * this.config.scale.x
+    );
+    this.canvas.zoomToPoint(
+      new Point({
+        x: center.x * this.config.scale.x,
+        y: -center.y * this.config.scale.y,
+      }),
+      0.7
+    );
+
+    this.canvas.requestRenderAll(); // 请求重新渲染画布以应用变换
 
     for (let i = 0; i < this.shapes.fences.length; i++) {
       this.shapes.fences[i].fastMap = this;
@@ -276,6 +290,13 @@ export class FastMap {
     return { x1, x2, y1, y2, z1, z2 };
   }
 
+  getCoordinates(point: Point | TPointerEventInfo<TPointerEvent>) {
+    const { scale } = this.config;
+    const p =
+      point instanceof Point ? point : this.canvas.getScenePoint(point.e);
+    return new Coordinates(p.x / scale.x, p.y / scale.y, 0);
+  }
+
   /**
    * 计算画布中心点
    */
@@ -354,7 +375,7 @@ export class FastMap {
         lastY = event.viewportPoint.y;
       }
       if (this.mode === "assign") {
-        const point = this.canvas.getScenePoint(event.e);
+        const point = this.getCoordinates(event);
         this.shapes.indicator = new Indicator({
           fastMap: this,
           center: new Coordinates(point.x, point.y, 0),
