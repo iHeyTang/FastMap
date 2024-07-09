@@ -85,8 +85,8 @@ export class Indicator {
       fill: "#fa5252",
       originX: "center",
       originY: "bottom",
-      left: this.center.x,
-      top: this.center.y,
+      left: this.center.x * this.fastMap.config.scale.x,
+      top: this.center.y * this.fastMap.config.scale.y,
       angle: -this.angle + 90,
     });
 

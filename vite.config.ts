@@ -9,7 +9,7 @@ export default defineConfig({
     viteMockServe({
       // 启动和关闭 mock 功能的配置
       mockPath: "mock", // mock 文件所在目录
-      enable: true, // 开发环境是否启用 mock 功能
+      enable: false, // 开发环境是否启用 mock 功能
     }),
   ],
 });
