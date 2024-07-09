@@ -207,14 +207,6 @@ function App() {
       0.7
     );
 
-    fastMap.addRobot(
-      new Robot({
-        fastMap,
-        key: "R24060500001@RBDP00X20",
-        center: new Coordinates(40000, -4000, 0, SCALE),
-      })
-    );
-
     const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
     // 监听机器人状态信息
     robotStatusSocket.onData((e) => {
