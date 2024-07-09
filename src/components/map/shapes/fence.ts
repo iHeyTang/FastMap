@@ -65,20 +65,20 @@ export class Fence {
             hoverCursor: "default",
           });
 
-          const text = new FabricText(
-            `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
-            {
-              evented: false,
-              originX: "center",
-              originY: "center",
-              fontSize: 8,
-              left: c.x * this.fastMap.config.scale.x,
-              top: c.y * this.fastMap.config.scale.y + 12,
-              text: `${index}(${c.x.toFixed(4)},${c.y.toFixed(4)})`,
-              hoverCursor: "default",
-              selectable: false,
-            }
-          );
+          const t = `${index}\n(${c.x},${c.y})`;
+
+          const text = new FabricText(t, {
+            evented: false,
+            originX: "center",
+            originY: "center",
+            fontSize: 4,
+            left: c.x * this.fastMap.config.scale.x,
+            top: c.y * this.fastMap.config.scale.y + 8,
+            text: t,
+            textAlign: 'center',
+            hoverCursor: "default",
+            selectable: false,
+          });
           return [dot, text];
         })
       : [];

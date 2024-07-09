@@ -3,7 +3,10 @@ import React, { useState } from "react";
 
 export interface StatusBarProps {
   style?: React.CSSProperties;
-  info: { cursorPosition: [number, number] };
+  info: {
+    cursorPosition: [number, number];
+    robotInfo?: { id: string; pos: number[]; angle: number };
+  };
   onClickAssignTask?: () => void;
   onClickCancelTask?: () => void;
   onCheckedShowPoint?: (showPoint: boolean) => void;
@@ -50,6 +53,19 @@ export const StatusBar: React.FC<StatusBarProps> = (props) => {
                 取消任务
               </Button>
             </Space.Compact>
+            {!props.info.robotInfo?.id && <Tag>未连接机器人</Tag>}
+            {props.info.robotInfo?.id && (
+              <Tag key="show">
+                <Space>
+                  <div>机器人: {props.info.robotInfo?.id}</div>
+                  <div>
+                    坐标: {props.info.robotInfo?.pos[0] || 0},
+                    {props.info.robotInfo?.pos[1] || 0}
+                  </div>
+                  <div>朝向: {props.info.robotInfo.angle}</div>
+                </Space>
+              </Tag>
+            )}
           </Space>
           {props.leftExtra}
         </Space>

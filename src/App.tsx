@@ -28,6 +28,10 @@ function App() {
   const taskCancelModal = useRef<TaskCancelModalRef>(null);
   const taskAssignModal = useRef<TaskAssignModalRef>(null);
 
+  const [robotInfo, setRobotInfo] = useState<
+    { id: string; pos: number[]; angle: number } | undefined
+  >();
+
   const [debug, setDebug] = useState(false);
   const [cursorPosition, setCursorPosition] = useState<[number, number]>([
     0, 0,
@@ -212,6 +216,7 @@ function App() {
         status: { pos: number[]; yaw: number };
       };
       const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
+      const angle = data.status.yaw * (180 / Math.PI);
       if (!robot) {
         fastMap.addRobot(
           new Robot({
@@ -220,9 +225,9 @@ function App() {
             center: new Coordinates(
               data.status.pos[0],
               data.status.pos[1],
-              data.status.pos[2] || 0
+              data.status.pos[2]
             ),
-            angle: data.status.yaw * (180 / Math.PI),
+            angle,
           })
         );
       } else {
@@ -233,9 +238,10 @@ function App() {
             data.status.pos[1],
             data.status.pos[2]
           ),
-          data.status.yaw * (180 / Math.PI)
+          angle
         );
       }
+      setRobotInfo({ id: data.peri_id, pos: data.status.pos, angle });
     });
   }, [debug, mapData, mapDataFetcher]);
 
@@ -270,43 +276,45 @@ function App() {
         style={{ height: "100vh", width: "100vw" }}
       ></canvas>
       <StatusBar
-        info={{
-          cursorPosition,
-        }}
-        leftExtra={[
-          <Button
-            key="add-robot"
-            size="small"
-            onClick={() => {
-              if (!fastMapRef.current) return;
-              if (fastMapRef.current.shapes.robots?.[0]) return;
-              fastMapRef.current.addRobot(
-                new Robot({
-                  fastMap: fastMapRef.current,
-                  key: "robot1",
-                  center: new Coordinates(0, 0, 0),
-                })
-              );
-            }}
-          >
-            添加测试机器人
-          </Button>,
-          <Button
-            key="change-robot"
-            size="small"
-            onClick={() => {
-              if (!fastMapRef.current) return;
-              const robot = fastMapRef.current.shapes.robots?.[0];
-              fastMapRef.current.setRobotTo(
-                "robot1",
-                new Coordinates(robot.center.x + 10, robot.center.y, 0),
-                robot.angle + 10
-              );
-            }}
-          >
-            模拟机器人位置变更
-          </Button>,
-        ]}
+        info={{ cursorPosition, robotInfo: robotInfo }}
+        // leftExtra={[
+        //   <Button
+        //     key="add-robot"
+        //     size="small"
+        //     onClick={() => {
+        //       if (!fastMapRef.current) return;
+        //       if (fastMapRef.current.shapes.robots?.[0]) return;
+        //       setRobotInfo({ id: "robot1", pos: [0, 0], angle: 0 });
+        //       fastMapRef.current.addRobot(
+        //         new Robot({
+        //           fastMap: fastMapRef.current,
+        //           key: "robot1",
+        //           center: new Coordinates(0, 0, 0),
+        //         })
+        //       );
+        //     }}
+        //   >
+        //     添加测试机器人
+        //   </Button>,
+        //   <Button
+        //     key="change-robot"
+        //     size="small"
+        //     onClick={() => {
+        //       if (!fastMapRef.current) return;
+        //       const robot = fastMapRef.current.shapes.robots?.[0];
+        //       const pos = [robot.center.x + 10, robot.center.y, 0];
+        //       const angle = robot.angle + 10;
+        //       setRobotInfo({ id: "robot1", pos, angle });
+        //       fastMapRef.current.setRobotTo(
+        //         "robot1",
+        //         new Coordinates(pos[0], pos[1], pos[2]),
+        //         angle
+        //       );
+        //     }}
+        //   >
+        //     模拟机器人位置变更
+        //   </Button>,
+        // ]}
         onCheckedShowPoint={(visible) => {
           if (!fastMapRef.current) return;
           setDebug(visible);

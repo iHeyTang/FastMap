@@ -1,6 +1,12 @@
 import { FastMap } from "../fast-map";
 import { Coordinates } from "./base";
-import { Circle, CircleProps, FabricObject, TOptions } from "fabric";
+import {
+  Circle,
+  CircleProps,
+  FabricObject,
+  FabricText,
+  TOptions,
+} from "fabric";
 
 export type WayPointType = "charge" | "chargePrepare" | "return" | "task";
 
@@ -58,7 +64,42 @@ export class WayPoint {
         ? { fill: "#099268", stroke: "#099268", radius: 20 }
         : {}),
     });
-    this.shapes = [circle];
+
+    const title = new FabricText(`${this.key}`, {
+      evented: false,
+      hasBorders: false,
+      hasControls: false,
+      originX: "center",
+      originY: "center",
+      fontSize: 8,
+      stroke: "#fff",
+      left: this.center.x * this.fastMap.config.scale.x,
+      top: this.center.y * this.fastMap.config.scale.y,
+      text: `${this.key}`,
+      hoverCursor: "default",
+      selectable: false,
+    });
+
+    const t = `(${this.center.x}, ${this.center.y})`;
+    const dots = this.fastMap.debug
+      ? [
+          new FabricText(t, {
+            evented: false,
+            hasBorders: false,
+            hasControls: false,
+            originX: "center",
+            originY: "center",
+            fontSize: 8,
+            left: this.center.x * this.fastMap.config.scale.x,
+            top: this.center.y * this.fastMap.config.scale.y + 12,
+            text: t,
+            hoverCursor: "default",
+            selectable: false,
+          }),
+        ]
+      : [];
+
+    this.shapes = [circle, title, ...dots];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 

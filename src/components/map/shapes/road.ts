@@ -150,29 +150,7 @@ export class Road {
         ]
       : [];
 
-    const dots = this.fastMap?.debug
-      ? [begin, end].map((c) => {
-          const text = new FabricText(
-            `(${c?.x.toFixed(4)},${c.y.toFixed(4)})`,
-            {
-              evented: false,
-              hasBorders: false,
-              hasControls: false,
-              originX: "center",
-              originY: "center",
-              fontSize: 8,
-              left: c.x,
-              top: c.y + 12,
-              text: `(${c?.x.toFixed(4)},${c.y.toFixed(4)})`,
-              hoverCursor: "default",
-              selectable: false,
-            }
-          );
-          return text;
-        })
-      : [];
-
-    this.shapes = [line, ...dots, ...title];
+    this.shapes = [line, ...title];
     this.fastMap?.canvas?.add(...this.shapes);
   }
 
