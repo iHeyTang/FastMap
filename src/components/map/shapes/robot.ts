@@ -45,7 +45,7 @@ export class Robot {
       originY: "center",
       left: this.center.x,
       top: this.center.y,
-      angle: this.angle,
+      angle: -this.angle,
     });
 
     this.shapes.push(img);
