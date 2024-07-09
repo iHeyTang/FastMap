@@ -9,7 +9,6 @@ import {
   Robot,
   WayPoint,
 } from "./components/map";
-import { Point } from "fabric";
 import {
   TaskAssignModal,
   TaskAssignModalRef,

@@ -66,7 +66,7 @@ export const StatusBar: React.FC<StatusBarProps> = (props) => {
             坐标
           </Checkbox>
           <Tag color="blue">
-            <div style={{ width: 100, textAlign: "center" }}>
+            <div style={{ width: 140, textAlign: "center" }}>
               {props.info.cursorPosition[0].toFixed(2)},{" "}
               {-props.info.cursorPosition[1].toFixed(2)}
             </div>
