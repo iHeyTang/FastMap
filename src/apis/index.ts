@@ -97,7 +97,7 @@ export function genMapDataFetcher(tid: string) {
   }
 
   function createRobotStatusSocket() {
-    const robotStatusSocket = new WebSocket(
+    let robotStatusSocket = new WebSocket(
       `ws://${window.location.hostname}/ws`
     );
     robotStatusSocket.onopen = () => {
@@ -106,6 +106,16 @@ export function genMapDataFetcher(tid: string) {
     robotStatusSocket.onmessage = (event) => {
       console.log(event.data);
     };
+    // 心跳，每10秒一次，若socket被关闭，重新打开
+    setInterval(() => {
+      if (robotStatusSocket.readyState === WebSocket.CLOSED) {
+        robotStatusSocket = new WebSocket(
+          `ws://${window.location.hostname}/ws`
+        );
+      } else {
+        robotStatusSocket.send(JSON.stringify({ heartbeat: 1 }));
+      }
+    }, 5000);
     return {
       ws: robotStatusSocket,
       onData: (cb: (this: WebSocket, ev: MessageEvent) => void) => {
