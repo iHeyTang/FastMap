@@ -87,7 +87,7 @@ export class Indicator {
       originY: "bottom",
       left: this.center.x,
       top: this.center.y,
-      angle: this.angle,
+      angle: -this.angle + 90,
     });
 
     this.shapes = [triangle, circle, text];
@@ -98,14 +98,13 @@ export class Indicator {
     if (!this.fastMap?.canvas) return;
 
     const pointer = this.fastMap.canvas.getScenePoint(event.e);
-    // 计算角度
+    // 角度为0到360，从右边开始逆时针计算
     const angle = Math.atan2(
       pointer.y - this.center.y,
       pointer.x - this.center.x
     );
-    // 角度为0到360，从正上方开始算
-    this.angle = Math.round((angle * 180) / Math.PI + 90);
-    if (this.angle < 0) this.angle += 360;
+    this.angle = Math.round(-(angle * 180) / Math.PI);
+    this.angle = this.angle < 0 ? this.angle + 360 : this.angle;
     this.fastMap.canvas.remove(...this.shapes);
     this.draw();
   }
