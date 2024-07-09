@@ -34,7 +34,7 @@ export function genMapDataFetcher(tid: string) {
     // if (data.csq !== 1) return [];
     return res.data.fence.map((f) => ({
       ...f,
-      points: f.points.map((p) => [p[0], -p[1]]),
+      points: f.points.map((p) => [p[0], p[1]]),
     }));
   }
 
@@ -45,7 +45,7 @@ export function genMapDataFetcher(tid: string) {
     // if (data.csq !== 1) return [];
     return res.data.point.map((p) => ({
       ...p,
-      pos: [p.pos[0], -p.pos[1], p.pos[2]],
+      pos: [p.pos[0], p.pos[1], p.pos[2]],
     }));
   }
 

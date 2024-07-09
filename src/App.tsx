@@ -75,7 +75,7 @@ function App() {
         backgroundColor: "#f0f0f0",
         // 这里是FastMap扩展的配置项，可以配置不同的图形的样式
         fastMapConfig: {
-          scale: { x: SCALE, y: SCALE },
+          scale: { x: SCALE, y: -SCALE },
           draw: {
             initOffset: [1200, 50],
             Fence: ({ type }) => {
