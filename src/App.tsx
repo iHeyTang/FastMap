@@ -15,7 +15,7 @@ import {
   TaskAssignModalRef,
 } from "./components/TaskAssignModal";
 import { StatusBar } from "./components/StatusBar";
-import { message } from "antd";
+import { Button, message } from "antd";
 import {
   TaskCancelModal,
   TaskCancelModalRef,
@@ -210,7 +210,11 @@ function App() {
     const robotStatusSocket = mapDataFetcher.createRobotStatusSocket();
     // 监听机器人状态信息
     robotStatusSocket.onData((e) => {
-      const data = JSON.parse(e.data);
+      const data = JSON.parse(e.data) as {
+        msg: string;
+        peri_id: string;
+        status: { pos: number[]; yaw: number };
+      };
       const robot = fastMap.shapes.robots.find((r) => r.key === data.peri_id);
       if (!robot) {
         fastMap.addRobot(
@@ -223,6 +227,7 @@ function App() {
               data.status.pos[2] || 0,
               SCALE
             ),
+            angle: data.status.yaw * (180 / Math.PI),
           })
         );
       } else {
@@ -233,7 +238,8 @@ function App() {
             data.status.pos[1],
             data.status.pos[2],
             SCALE
-          )
+          ),
+          data.status.yaw * (180 / Math.PI)
         );
       }
     });
@@ -273,12 +279,48 @@ function App() {
         info={{
           cursorPosition,
         }}
+        leftExtra={[
+          <Button
+            size="small"
+            onClick={() => {
+              if (!fastMapRef.current) return;
+              if (fastMapRef.current.shapes.robots?.[0]) return;
+              fastMapRef.current.addRobot(
+                new Robot({
+                  fastMap: fastMapRef.current,
+                  key: "robot1",
+                  center: new Coordinates(0, 0, 0),
+                })
+              );
+            }}
+          >
+            添加测试机器人
+          </Button>,
+          <Button
+            size="small"
+            onClick={() => {
+              if (!fastMapRef.current) return;
+              const robot = fastMapRef.current.shapes.robots?.[0];
+              fastMapRef.current.setRobotTo(
+                "robot1",
+                new Coordinates(robot.center.x + 10, robot.center.y, 0),
+                robot.angle + 10
+              );
+            }}
+          >
+            模拟机器人位置变更
+          </Button>,
+        ]}
         onCheckedShowPoint={(visible) => {
           if (!fastMapRef.current) return;
           setDebug(visible);
         }}
         onClickAssignTask={() => {
           if (!fastMapRef.current) return;
+          if (!fastMapRef.current.shapes.robots?.[0]) {
+            message.error("请先添加机器人");
+            return;
+          }
           fastMapRef.current.mode = "assign";
           fastMapRef.current.canvas.defaultCursor = "crosshair";
         }}
@@ -292,16 +334,28 @@ function App() {
         onOk={async (e) => {
           if (!fastMapRef.current) return;
           fastMapRef.current.canvas.defaultCursor = "default";
-          if (!e.waypointKey) {
+          if (!e.waypointKey && e.waypointKey !== 0) {
             message.error("请选择点位");
             return;
           }
           const res = await mapDataFetcher.navigationPlan(
             e.fastMap.shapes.robots[0].key,
-            e.waypointKey
+            !e.waypointKey && e.waypointKey !== 0
+              ? [e.x / SCALE, -e.y / SCALE, 0]
+              : e.waypointKey
           );
           if (res.code === 0) {
             message.success("下发成功");
+            fastMapRef.current.clearNavigation(1);
+            fastMapRef.current?.navigation(
+              1,
+              res.path.map((r) => {
+                if (Array.isArray(r)) {
+                  return [r[0] * SCALE, -r[1] * SCALE, 0];
+                }
+                return r;
+              })
+            );
           } else {
             message.error("下发失败");
           }
@@ -319,6 +373,7 @@ function App() {
           );
           if (res.code === 0) {
             message.success("取消成功");
+            fastMap.clearNavigation(1);
           } else {
             message.error("取消失败");
           }

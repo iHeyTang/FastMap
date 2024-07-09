@@ -7,6 +7,7 @@ export interface StatusBarProps {
   onClickAssignTask?: () => void;
   onClickCancelTask?: () => void;
   onCheckedShowPoint?: (showPoint: boolean) => void;
+  leftExtra?: React.ReactNode[];
 }
 
 export const StatusBar: React.FC<StatusBarProps> = (props) => {
@@ -50,6 +51,7 @@ export const StatusBar: React.FC<StatusBarProps> = (props) => {
               </Button>
             </Space.Compact>
           </Space>
+          {props.leftExtra}
         </Space>
 
         <Space align="end">

@@ -53,13 +53,16 @@ export function genMapDataFetcher(tid: string) {
     return res.data.line;
   }
 
-  async function navigationPlan(peri_id: string, point: string | number) {
+  async function navigationPlan(
+    peri_id: string,
+    point: string | number | number[]
+  ) {
     try {
       const res = await axios<{
         code: number;
         peri_id: string;
         point: number;
-        path: number[];
+        path: (number | number[])[];
       }>(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
         method: "POST",
         data: { tid, peri_id: peri_id, point },

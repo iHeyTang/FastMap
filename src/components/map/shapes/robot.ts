@@ -9,7 +9,7 @@ import { Coordinates } from "./base";
 export class Robot {
   key: string;
 
-  fastMap: FastMap | undefined;
+  fastMap: FastMap;
 
   shapes: FabricObject[] = [];
 
@@ -30,9 +30,9 @@ export class Robot {
   }
 
   moveTo(center: Coordinates, angle?: number) {
+    this.clear();
     this.center = center;
     this.angle = angle || this.angle;
-    if (this.shapes) this.fastMap?.canvas?.remove(...this.shapes);
     this.draw();
   }
 
@@ -51,7 +51,13 @@ export class Robot {
       img.lockScalingFlip = true;
       img.minScaleLimit = 0.025;
       img.padding = 5;
-      this.fastMap?.canvas?.add(img);
+      this.shapes.push(img);
+      this.fastMap.canvas.add(...this.shapes);
     });
+  }
+
+  clear() {
+    this.fastMap.canvas.remove(...this.shapes);
+    this.shapes = [];
   }
 }

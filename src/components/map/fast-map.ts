@@ -15,6 +15,7 @@ import {
   Coordinates,
   Fence,
   FenceType,
+  Navigation,
   Road,
   RoadGait,
   RoadMode,
@@ -56,6 +57,7 @@ export class FastMap {
     roads: Road[];
     waypoints: WayPoint[];
     robots: Robot[];
+    navigations: Navigation[];
   };
 
   highlights?: Highlights;
@@ -75,6 +77,7 @@ export class FastMap {
       roads: [],
       waypoints: [],
       robots: [],
+      navigations: [],
       indicator: null,
     };
     const { fastMapConfig, ...canvasOptions } = options;
@@ -136,10 +139,10 @@ export class FastMap {
    * @param robotKey
    * @param coordinates
    */
-  setRobotTo(robotKey: string, coordinates: Coordinates) {
+  setRobotTo(robotKey: string, coordinates: Coordinates, angle?: number) {
     const robot = this.shapes.robots.find((r) => r.key === robotKey);
     if (robot) {
-      robot.moveTo(coordinates);
+      robot.moveTo(coordinates, angle);
     }
   }
 
@@ -183,6 +186,26 @@ export class FastMap {
     for (let i = 0; i < this.shapes.waypoints.length; i++) {
       this.shapes.waypoints[i].fastMap = this;
       this.shapes.waypoints[i].draw();
+    }
+  }
+
+  navigation(id: string | number, points: (string | number | number[])[]) {
+    const navigation = new Navigation({
+      fastMap: this,
+      key: id,
+      paths: points,
+    });
+    this.shapes.navigations.push(navigation);
+    navigation.draw();
+  }
+
+  clearNavigation(id: string | number) {
+    const navigation = this.shapes.navigations.find((r) => r.key === id);
+    if (navigation) {
+      navigation.clear();
+      this.shapes.navigations = this.shapes.navigations.filter(
+        (r) => r.key !== id
+      );
     }
   }
 
