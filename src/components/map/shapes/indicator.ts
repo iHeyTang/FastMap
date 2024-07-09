@@ -103,8 +103,9 @@ export class Indicator {
       pointer.y - this.center.y,
       pointer.x - this.center.x
     );
-    this.angle = Math.round(-(angle * 180) / Math.PI);
+    this.angle = Math.round((angle * 180) / Math.PI);
     this.angle = this.angle < 0 ? this.angle + 360 : this.angle;
+    console.log("🚀 ~ Indicator ~ onMouseMove ~ angle:", this.angle);
     this.fastMap.canvas.remove(...this.shapes);
     this.draw();
   }
