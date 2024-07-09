@@ -36,24 +36,20 @@ export class Robot {
     this.draw();
   }
 
-  draw() {
-    FabricImage.fromURL(RobotImage).then((img) => {
-      img.set({
-        evented: false,
-        scaleX: 0.7,
-        scaleY: 0.7,
-        originX: "center",
-        originY: "center",
-        left: this.center.x,
-        top: this.center.y,
-        angle: this.angle,
-      });
-      img.lockScalingFlip = true;
-      img.minScaleLimit = 0.025;
-      img.padding = 5;
-      this.shapes.push(img);
-      this.fastMap.canvas.add(...this.shapes);
+  async draw() {
+    const img = await FabricImage.fromURL(RobotImage, undefined, {
+      evented: false,
+      scaleX: 0.02,
+      scaleY: 0.02,
+      originX: "center",
+      originY: "center",
+      left: this.center.x,
+      top: this.center.y,
+      angle: this.angle,
     });
+
+    this.shapes.push(img);
+    this.fastMap.canvas.add(...this.shapes);
   }
 
   clear() {

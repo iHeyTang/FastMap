@@ -281,6 +281,7 @@ function App() {
         }}
         leftExtra={[
           <Button
+            key="add-robot"
             size="small"
             onClick={() => {
               if (!fastMapRef.current) return;
@@ -297,6 +298,7 @@ function App() {
             添加测试机器人
           </Button>,
           <Button
+            key="change-robot"
             size="small"
             onClick={() => {
               if (!fastMapRef.current) return;
