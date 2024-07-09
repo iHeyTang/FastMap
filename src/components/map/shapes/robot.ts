@@ -30,10 +30,16 @@ export class Robot {
   }
 
   moveTo(center: Coordinates, angle?: number) {
-    this.clear();
     this.center = center;
     this.angle = angle || this.angle;
-    this.draw();
+    this.shapes.forEach((s) => {
+      s.set({
+        left: this.center.x * this.fastMap.config.scale.x,
+        top: this.center.y * this.fastMap.config.scale.y,
+        angle: -this.angle,
+      });
+    });
+    this.fastMap.canvas.requestRenderAll();
   }
 
   async draw() {
