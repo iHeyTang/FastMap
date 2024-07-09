@@ -330,10 +330,6 @@ function App() {
         onOk={async (e) => {
           if (!fastMapRef.current) return;
           fastMapRef.current.canvas.defaultCursor = "default";
-          if (!e.waypointKey && e.waypointKey !== 0) {
-            message.error("请选择点位");
-            return;
-          }
           const res = await mapDataFetcher.navigationPlan(
             e.fastMap.shapes.robots[0].key,
             !e.waypointKey && e.waypointKey !== 0
