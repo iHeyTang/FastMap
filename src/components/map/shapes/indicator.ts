@@ -97,7 +97,7 @@ export class Indicator {
   onMouseMove(event: TPointerEventInfo<TPointerEvent>) {
     if (!this.fastMap?.canvas) return;
 
-    const pointer = this.fastMap.canvas.getScenePoint(event.e);
+    const pointer = this.fastMap.getCoordinates(event);
     // 角度为0到360，从右边开始逆时针计算
     const angle = Math.atan2(
       pointer.y - this.center.y,
