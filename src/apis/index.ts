@@ -70,7 +70,13 @@ export function genMapDataFetcher(tid: string) {
         path: (number | number[])[];
       }>(`${HTTP_SEVER_HOST}/patro/navigation/plan`, {
         method: "POST",
-        data: { tid, peri_id: peri_id, point, yaw: yaw },
+        data: {
+          tid,
+          peri_id: peri_id,
+          point: Array.isArray(point) ? undefined : point,
+          pos: Array.isArray(point) ? point : undefined,
+          yaw: yaw,
+        },
       });
       return {
         code: res.data.code,
