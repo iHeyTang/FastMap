@@ -63,8 +63,8 @@ export class Navigation {
       if (index < points.length - 1) {
         const line = new Line(
           [
-            p.x,
-            p.y,
+            p.x * this.fastMap.config.scale.x,
+            p.y * this.fastMap.config.scale.y,
             points[index + 1]!.x * this.fastMap.config.scale.x,
             points[index + 1]!.y * this.fastMap.config.scale.y,
           ],

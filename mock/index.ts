@@ -212,8 +212,9 @@ export default [
     url: "/patro/navigation/plan",
     method: "post",
     response: () => ({
-      code: 1,
-      paths: [1, 2, 0, [205509, 21339], 3, [205509, -2339]],
+      code: 0,
+      msg: "ok",
+      path: [[31230, -960], [31231, 540], [31232, 1476], 11, 10, 11, 4, 13],
     }),
   },
 ];
