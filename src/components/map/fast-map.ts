@@ -153,7 +153,7 @@ export class FastMap {
    */
   initiate() {
     this.initEventHandler();
-    this.canvas.add(
+    this.add(
       new Circle({
         evented: false,
         radius: 1,
@@ -439,5 +439,22 @@ export class FastMap {
     this.canvas.on("mouse:move", (e) => {
       handler(e);
     });
+  }
+
+  add(...objects: FabricObject[]) {
+    // 保证文字处于最顶层,还需要考虑已经存在的文字
+    const texts = objects.filter((o) => o.type === "text");
+    const others = objects.filter((o) => o.type !== "text");
+
+    this.canvas.add(...texts);
+
+    const existTextIndex = this.canvas
+      .getObjects()
+      .findIndex((o) => o.type === "text");
+    if (existTextIndex === -1) {
+      this.canvas.add(...objects);
+    } else {
+      this.canvas.insertAt(existTextIndex, ...others);
+    }
   }
 }

@@ -82,7 +82,7 @@ export class Robot {
     });
 
     this.shapes.push(img, title);
-    this.fastMap.canvas.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 
   clear() {

@@ -100,7 +100,7 @@ export class WayPoint {
       : [];
 
     this.shapes = [circle, title, ...dots];
-    this.fastMap?.canvas?.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 
   setDynamicOptions(options: TOptions<CircleProps>) {

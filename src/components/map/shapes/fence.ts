@@ -75,7 +75,7 @@ export class Fence {
             left: c.x * this.fastMap.config.scale.x,
             top: c.y * this.fastMap.config.scale.y + 8,
             text: t,
-            textAlign: 'center',
+            textAlign: "center",
             hoverCursor: "default",
             selectable: false,
           });
@@ -84,6 +84,6 @@ export class Fence {
       : [];
 
     this.shapes = [shape, ...dots];
-    this.fastMap?.canvas?.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 }

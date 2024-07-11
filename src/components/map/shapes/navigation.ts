@@ -84,26 +84,27 @@ export class Navigation {
         this.shapes.push(line);
       }
 
-      const dot = this.fastMap?.debug
-        ? new FabricText(`${JSON.stringify(this.paths[index])}`, {
-            evented: false,
-            hasBorders: false,
-            hasControls: false,
-            originX: "center",
-            originY: "center",
-            fontSize: 8,
-            left: p.x * this.fastMap.config.scale.x,
-            top: p.y * this.fastMap.config.scale.y + 12,
-            text: `${JSON.stringify(this.paths[index])}`,
-            hoverCursor: "default",
-            selectable: false,
-          })
-        : undefined;
+      const dot =
+        this.fastMap?.debug && typeof this.paths[index] === "object"
+          ? new FabricText(`${JSON.stringify(this.paths[index])}`, {
+              evented: false,
+              hasBorders: false,
+              hasControls: false,
+              originX: "center",
+              originY: "center",
+              fontSize: 8,
+              left: p.x * this.fastMap.config.scale.x,
+              top: p.y * this.fastMap.config.scale.y + 12,
+              text: `${JSON.stringify(this.paths[index])}`,
+              hoverCursor: "default",
+              selectable: false,
+            })
+          : undefined;
       if (dot) {
         this.shapes.push(dot);
       }
     });
-    this.fastMap.canvas.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 
   clear() {

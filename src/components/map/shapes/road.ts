@@ -151,7 +151,7 @@ export class Road {
       : [];
 
     this.shapes = [line, ...title];
-    this.fastMap?.canvas?.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 
   setDynamicOptions(options: TOptions<FabricObjectProps>) {

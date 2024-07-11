@@ -91,7 +91,7 @@ export class Indicator {
     });
 
     this.shapes = [triangle, circle, text];
-    this.fastMap?.canvas?.add(...this.shapes);
+    this.fastMap.add(...this.shapes);
   }
 
   onMouseMove(event: TPointerEventInfo<TPointerEvent>) {

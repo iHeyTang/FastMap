@@ -14,7 +14,7 @@ import {
   TaskAssignModalRef,
 } from "./components/TaskAssignModal";
 import { StatusBar } from "./components/StatusBar";
-import { message } from "antd";
+import { Button, message } from "antd";
 import {
   TaskCancelModal,
   TaskCancelModalRef,
@@ -277,44 +277,44 @@ function App() {
       ></canvas>
       <StatusBar
         info={{ cursorPosition, robotInfo: robotInfo }}
-        // leftExtra={[
-        //   <Button
-        //     key="add-robot"
-        //     size="small"
-        //     onClick={() => {
-        //       if (!fastMapRef.current) return;
-        //       if (fastMapRef.current.shapes.robots?.[0]) return;
-        //       setRobotInfo({ id: "robot1", pos: [0, 0], angle: 0 });
-        //       fastMapRef.current.addRobot(
-        //         new Robot({
-        //           fastMap: fastMapRef.current,
-        //           key: "robot1",
-        //           center: new Coordinates(0, 0, 0),
-        //         })
-        //       );
-        //     }}
-        //   >
-        //     添加测试机器人
-        //   </Button>,
-        //   <Button
-        //     key="change-robot"
-        //     size="small"
-        //     onClick={() => {
-        //       if (!fastMapRef.current) return;
-        //       const robot = fastMapRef.current.shapes.robots?.[0];
-        //       const pos = [robot.center.x + 10, robot.center.y, 0];
-        //       const angle = robot.angle + 10;
-        //       setRobotInfo({ id: "robot1", pos, angle });
-        //       fastMapRef.current.setRobotTo(
-        //         "robot1",
-        //         new Coordinates(pos[0], pos[1], pos[2]),
-        //         angle
-        //       );
-        //     }}
-        //   >
-        //     模拟机器人位置变更
-        //   </Button>,
-        // ]}
+        leftExtra={[
+          <Button
+            key="add-robot"
+            size="small"
+            onClick={() => {
+              if (!fastMapRef.current) return;
+              if (fastMapRef.current.shapes.robots?.[0]) return;
+              setRobotInfo({ id: "robot1", pos: [0, 0], angle: 0 });
+              fastMapRef.current.addRobot(
+                new Robot({
+                  fastMap: fastMapRef.current,
+                  key: "robot1",
+                  center: new Coordinates(0, 0, 0),
+                })
+              );
+            }}
+          >
+            添加测试机器人
+          </Button>,
+          <Button
+            key="change-robot"
+            size="small"
+            onClick={() => {
+              if (!fastMapRef.current) return;
+              const robot = fastMapRef.current.shapes.robots?.[0];
+              const pos = [robot.center.x + 10, robot.center.y, 0];
+              const angle = robot.angle + 10;
+              setRobotInfo({ id: "robot1", pos, angle });
+              fastMapRef.current.setRobotTo(
+                "robot1",
+                new Coordinates(pos[0], pos[1], pos[2]),
+                angle
+              );
+            }}
+          >
+            模拟机器人位置变更
+          </Button>,
+        ]}
         onCheckedShowPoint={(visible) => {
           if (!fastMapRef.current) return;
           setDebug(visible);
